@@ -27,6 +27,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -447,6 +448,18 @@ private fun MainApplicationContent(
         stack.clear()
         stack.add(Screen.Main)
     }
+
+    val onBackPressed: () -> Unit = {
+        if (stack.size > 1) {
+            pop()
+        } else {
+            goHome()
+        }
+    }
+
+    // Route the system back gesture/button through the screen stack instead of
+    // letting the Activity finish (which closes the app).
+    BackHandler { onBackPressed() }
 
     LaunchedEffect(pendingDeepLinkSubjectId.value) {
         pendingDeepLinkSubjectId.value?.let { subjectId ->

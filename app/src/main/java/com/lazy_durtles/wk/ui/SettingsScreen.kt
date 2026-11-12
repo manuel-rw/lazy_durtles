@@ -116,49 +116,49 @@ fun SettingsScreen(
         }
         "backup" -> {
             BackupRestoreScreen(
-                onBack = { selectedCategory = null },
+                onBack = onBack,
             )
         }
         "advanced" -> {
             AdvancedSettings(
-                onBack = { selectedCategory = null },
+                onBack = onBack,
             )
         }
         "data_import_export" -> {
             DataImportExportScreen(
-                onBack = { selectedCategory = null },
+                onBack = onBack,
             )
         }
         "font_selection" -> {
             FontSelectionScreen(
-                onBack = { selectedCategory = null },
+                onBack = onBack,
             )
         }
         "font_import" -> {
             FontImportScreen(
-                onBack = { selectedCategory = null },
+                onBack = onBack,
             )
         }
         "download_audio" -> {
             DownloadAudioScreen(
-                onBack = { selectedCategory = null },
+                onBack = onBack,
             )
         }
         "support" -> {
             SupportScreen(
-                onBack = { selectedCategory = null },
+                onBack = onBack,
             )
         }
         "keyboard_help" -> {
             KeyboardHelpScreen(
-                onBack = { selectedCategory = null },
+                onBack = onBack,
                 onOpenKeyboardSettings = { selectedCategory = "keyboard" },
             )
         }
         else -> {
             CategoryDetailScreen(
                 categoryId = selectedCategory!!,
-                onBack = { selectedCategory = null },
+                onBack = onBack,
                 onOpenCategory = { selectedCategory = it },
                 onOpenThemeCustomization = onOpenThemeCustomization,
                 onGoHome = onGoHome,
