@@ -63,13 +63,20 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      - name: Set up AVD (requires internet)
+        uses: nrwl/nx-set-env-action@v0.1.2
+        with:
+          envName: GRADLE_USER_HOME
+          value: ${{ github.workspace }}/gradle-home
+
       - name: Run instrumented tests on emulator
-        uses: reactivecircus/android-emulator-runner@v2
+        uses: reactivecircus/android-emulator-runner@v4.2
         with:
           api-level: 34
           target: google_apis
           arch: x86_64
-          script: ./gradlew :app:connectedDebugAndroidTest
+          nativeBundling: true
+          scripts: ./gradlew :app:connectedDebugAndroidTest
 
       - name: Upload test results
         if: failure()
