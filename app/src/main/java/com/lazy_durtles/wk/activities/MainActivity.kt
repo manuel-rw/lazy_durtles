@@ -27,6 +27,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -455,6 +456,10 @@ private fun MainApplicationContent(
             goHome()
         }
     }
+
+    // Route the system back gesture/button through the screen stack instead of
+    // letting the Activity finish (which closes the app).
+    BackHandler { onBackPressed() }
 
     LaunchedEffect(pendingDeepLinkSubjectId.value) {
         pendingDeepLinkSubjectId.value?.let { subjectId ->
