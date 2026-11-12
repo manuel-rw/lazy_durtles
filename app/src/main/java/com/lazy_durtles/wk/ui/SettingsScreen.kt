@@ -144,11 +144,6 @@ fun SettingsScreen(
                 onBack = onBack,
             )
         }
-        "support" -> {
-            SupportScreen(
-                onBack = onBack,
-            )
-        }
         "keyboard_help" -> {
             KeyboardHelpScreen(
                 onBack = onBack,
