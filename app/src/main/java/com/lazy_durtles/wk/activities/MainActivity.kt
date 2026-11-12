@@ -220,7 +220,7 @@ class MainActivity : ComponentActivity() {
             override fun run() {
                 JobRunnerService.schedule(TickJob::class.java, "")
             }
-        }, MINUTE.toLong(), MINUTE.toLong())
+        }, MINUTE, MINUTE)
 
         volumeControlStream = AudioManager.STREAM_MUSIC
 
