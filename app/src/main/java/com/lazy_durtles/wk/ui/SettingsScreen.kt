@@ -153,7 +153,7 @@ fun SettingsScreen(
             KeyboardHelpScreen(
                 onOpenKeyboardSettings = { selectedCategory = "keyboard" },
                 onBack = onBack,
-                onOpenKeyboardSettings = { selectedCategory = "keyboard" },
+                modifier = modifier,
             )
         }
         else -> {
