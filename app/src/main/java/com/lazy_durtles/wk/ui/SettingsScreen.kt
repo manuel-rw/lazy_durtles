@@ -146,8 +146,8 @@ fun SettingsScreen(
         }
         "keyboard_help" -> {
             KeyboardHelpScreen(
-                onBack = onBack,
                 onOpenKeyboardSettings = { selectedCategory = "keyboard" },
+                onBack = onBack,
             )
         }
         else -> {
