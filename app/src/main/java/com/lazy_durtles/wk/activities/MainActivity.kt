@@ -72,15 +72,14 @@ import com.lazy_durtles.wk.services.JobRunnerService
 import com.lazy_durtles.wk.ui.MainScreen
 import com.lazy_durtles.wk.ui.SessionScreen
 import com.lazy_durtles.wk.ui.SettingsScreen
+import com.lazy_durtles.wk.ui.SettingsCategoryScreen
 import com.lazy_durtles.wk.ui.screens.browse.SearchResultsScreen
 import com.lazy_durtles.wk.ui.screens.browse.StudyMaterialsScreen
 import com.lazy_durtles.wk.ui.screens.browse.SubjectDetailsScreen
 import com.lazy_durtles.wk.ui.screens.browse.srsBucketSearchParameters
 import com.lazy_durtles.wk.ui.screens.selfstudy.SelfStudyStartScreen
 import com.lazy_durtles.wk.ui.screens.session.SessionLogScreen
-import com.lazy_durtles.wk.ui.screens.settings.KeyboardHelpScreen
 import com.lazy_durtles.wk.ui.screens.settings.NoApiKeyScreen
-import com.lazy_durtles.wk.ui.screens.settings.ThemeCustomizationScreen
 import com.lazy_durtles.wk.ui.theme.LazyDurtlesTheme
 import com.lazy_durtles.wk.util.Logger
 import org.json.JSONArray
@@ -333,10 +332,16 @@ class MainActivity : ComponentActivity() {
  * The screens of the app, managed as a back stack by the Compose content.
  */
 private sealed class Screen {
-    data object Main : Screen()
+    /**
+     * One of the bottom-bar tabs of the main screen: 0 dashboard,
+     * 1 search, 2 profile. Each tab switch is its own stack entry so
+     * system back retraces the tabs in visit order.
+     */
+    data class Main(val tab: Int = 0) : Screen()
     data class Session(val type: String) : Screen()
     data object SessionLog : Screen()
     data object Settings : Screen()
+    data class SettingsCategory(val categoryId: String) : Screen()
     data class SearchResults(
         val searchParametersJson: String,
         val searchType: Int = 2,
@@ -344,21 +349,26 @@ private sealed class Screen {
     ) : Screen()
     data class SubjectDetails(val subjectId: Long, val subjectIds: List<Long>) : Screen()
     data class SelfStudyStart(val initialSearchParametersJson: String? = null) : Screen()
-    data object ThemeCustomization : Screen()
     data class StudyMaterials(val subjectId: Long) : Screen()
-    data object KeyboardHelp : Screen()
 }
 
 private fun Screen.toJson(): JSONObject {
     val o = JSONObject()
     when (this) {
-        is Screen.Main -> o.put("type", "main")
+        is Screen.Main -> {
+            o.put("type", "main")
+            o.put("tab", tab)
+        }
         is Screen.Session -> {
             o.put("type", "session")
             o.put("sessionType", type)
         }
         is Screen.SessionLog -> o.put("type", "sessionLog")
         is Screen.Settings -> o.put("type", "settings")
+        is Screen.SettingsCategory -> {
+            o.put("type", "settingsCategory")
+            o.put("id", categoryId)
+        }
         is Screen.SearchResults -> {
             o.put("type", "searchResults")
             o.put("json", searchParametersJson)
@@ -378,12 +388,10 @@ private fun Screen.toJson(): JSONObject {
                 o.put("json", initialSearchParametersJson)
             }
         }
-        is Screen.ThemeCustomization -> o.put("type", "themeCustomization")
         is Screen.StudyMaterials -> {
             o.put("type", "studyMaterials")
             o.put("subjectId", subjectId)
         }
-        is Screen.KeyboardHelp -> o.put("type", "keyboardHelp")
     }
     return o
 }
@@ -392,6 +400,11 @@ private fun screenFromJson(o: JSONObject): Screen = when (o.getString("type")) {
     "session" -> Screen.Session(o.getString("sessionType"))
     "sessionLog" -> Screen.SessionLog
     "settings" -> Screen.Settings
+    "settingsCategory" -> Screen.SettingsCategory(o.getString("id"))
+    // Type names saved by older builds; theme customization and the keyboard
+    // help screen are settings levels now.
+    "themeCustomization" -> Screen.SettingsCategory("theme_customization")
+    "keyboardHelp" -> Screen.SettingsCategory("keyboard_help")
     "searchResults" -> Screen.SearchResults(
         o.getString("json"),
         o.optInt("searchType", 2),
@@ -402,10 +415,8 @@ private fun screenFromJson(o: JSONObject): Screen = when (o.getString("type")) {
         o.optJSONArray("ids")?.let { array -> (0 until array.length()).map { array.getLong(it) } } ?: emptyList(),
     )
     "selfStudyStart" -> Screen.SelfStudyStart(o.optString("json", "").ifEmpty { null })
-    "themeCustomization" -> Screen.ThemeCustomization
     "studyMaterials" -> Screen.StudyMaterials(o.getLong("subjectId"))
-    "keyboardHelp" -> Screen.KeyboardHelp
-    else -> Screen.Main
+    else -> Screen.Main()
 }
 
 /**
@@ -418,7 +429,7 @@ private val ScreenStackSaver = Saver<SnapshotStateList<Screen>, List<String>>(
         val stack = mutableStateListOf<Screen>()
         saved.forEach { json -> stack.add(screenFromJson(JSONObject(json))) }
         if (stack.isEmpty()) {
-            stack.add(Screen.Main)
+            stack.add(Screen.Main())
         }
         stack
     },
@@ -440,13 +451,23 @@ private fun MainApplicationContent(
         return
     }
 
-    val stack = rememberSaveable(saver = ScreenStackSaver) { mutableStateListOf(Screen.Main) }
+    val stack = rememberSaveable(saver = ScreenStackSaver) { mutableStateListOf(Screen.Main()) }
     val currentScreen = stack.last()
     val push: (Screen) -> Unit = { stack.add(it) }
     val pop: () -> Unit = { if (stack.size > 1) stack.removeAt(stack.lastIndex) }
     val goHome: () -> Unit = {
         stack.clear()
-        stack.add(Screen.Main)
+        stack.add(Screen.Main())
+    }
+
+    // Switching bottom-bar tabs pushes a new Main entry (unless that tab is
+    // already on top), so system back retraces the visited tabs one level at
+    // a time instead of jumping straight back to the dashboard.
+    val gotoTab: (Int) -> Unit = { tab ->
+        val top = stack.lastOrNull()
+        if (!(top is Screen.Main && top.tab == tab)) {
+            stack.add(Screen.Main(tab))
+        }
     }
 
     val onBackPressed: () -> Unit = {
@@ -476,8 +497,10 @@ private fun MainApplicationContent(
     }
 
     when (val screen = currentScreen) {
-        Screen.Main -> {
+        is Screen.Main -> {
             MainScreen(
+                selectedTab = screen.tab,
+                onTabSelected = gotoTab,
                 onStartLessons = {
                     activity.startNewSession("LESSONS") { push(Screen.Session("LESSONS")) }
                 },
@@ -488,7 +511,7 @@ private fun MainApplicationContent(
                 onGoToSettings = { push(Screen.Settings) },
                 onViewSessionLog = { push(Screen.SessionLog) },
                 onRetryApiError = activity::retryApiError,
-                onViewKeyboardHelp = { push(Screen.KeyboardHelp) },
+                onViewKeyboardHelp = { push(Screen.SettingsCategory("keyboard_help")) },
                 onSyncNow = activity::syncNow,
                 onSrsBucketClick = { bucket ->
                     push(
@@ -525,7 +548,14 @@ private fun MainApplicationContent(
         Screen.Settings -> {
             SettingsScreen(
                 onBack = pop,
-                onOpenThemeCustomization = { push(Screen.ThemeCustomization) },
+                onOpenCategory = { push(Screen.SettingsCategory(it)) },
+            )
+        }
+        is Screen.SettingsCategory -> {
+            SettingsCategoryScreen(
+                categoryId = screen.categoryId,
+                onBack = pop,
+                onOpenCategory = { push(Screen.SettingsCategory(it)) },
                 onGoHome = goHome,
             )
         }
@@ -541,6 +571,7 @@ private fun MainApplicationContent(
                 onRefineSearch = { json ->
                     pendingSearchParameters = json
                     pop()
+                    gotoTab(1)
                 },
                 onStartSelfStudy = { json -> push(Screen.SelfStudyStart(json)) },
             )
@@ -563,19 +594,10 @@ private fun MainApplicationContent(
                 initialSearchParametersJson = screen.initialSearchParametersJson,
             )
         }
-        Screen.ThemeCustomization -> {
-            ThemeCustomizationScreen(onBack = pop)
-        }
         is Screen.StudyMaterials -> {
             StudyMaterialsScreen(
                 subjectId = screen.subjectId,
                 onBack = pop,
-            )
-        }
-        Screen.KeyboardHelp -> {
-            KeyboardHelpScreen(
-                onBack = pop,
-                onOpenKeyboardSettings = { push(Screen.Settings) },
             )
         }
     }

@@ -66,7 +66,6 @@ private const val DEFAULT_AVATAR_URL =
 fun ProfileScreen(
     onGoToSettings: () -> Unit,
     onViewSessionLog: () -> Unit = {},
-    onBackPressed: () -> Unit = { },
     modifier: Modifier = Modifier,
 ) {
     val levelDuration = LiveLevelDuration.getInstance().observeAsState()

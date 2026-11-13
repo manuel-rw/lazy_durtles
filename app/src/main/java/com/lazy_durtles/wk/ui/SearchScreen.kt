@@ -67,7 +67,6 @@ fun SearchScreen(
     modifier: Modifier = Modifier,
     onSearchResults: (searchParametersJson: String, searchType: Int, presetName: String?) -> Unit = { _, _, _ -> },
     initialParametersJson: String? = null,
-    onBackPressed: () -> Unit = { },
 ) {
     var query by remember { mutableStateOf("") }
     var results by remember { mutableStateOf<List<Subject>>(emptyList()) }

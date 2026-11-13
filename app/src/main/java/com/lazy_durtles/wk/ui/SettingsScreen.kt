@@ -85,77 +85,64 @@ import com.lazy_durtles.wk.ui.screens.settings.FontImportScreen
 import com.lazy_durtles.wk.ui.screens.settings.FontSelectionScreen
 import com.lazy_durtles.wk.ui.screens.settings.HtmlNoticeText
 import com.lazy_durtles.wk.ui.screens.settings.KeyboardHelpScreen
+import com.lazy_durtles.wk.ui.screens.settings.ThemeCustomizationScreen
 import jp.wasabeef.glide.transformations.RoundedCornersTransformation
 import java.util.Locale
 
 /**
- * Settings screen. Shows a list of setting categories; each category opens a
- * detail screen with the settings for that group. All values are persisted
- * immediately via GlobalSettings / SharedPreferences.
+ * Settings screen. Shows the list of setting categories; each category is
+ * opened as its own screen on the navigation stack via [onOpenCategory].
+ * All values are persisted immediately via GlobalSettings / SharedPreferences.
  */
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
-    onOpenThemeCustomization: () -> Unit = {},
+    onOpenCategory: (String) -> Unit = {},
+) {
+    CategoryListScreen(
+        onBack = onBack,
+        onCategoryClick = onOpenCategory,
+        modifier = modifier,
+    )
+}
+
+/**
+ * One settings category: either a full sub-screen (backup, advanced, font
+ * selection, ...) or an inline detail panel. Every level is its own entry on
+ * the navigation stack, so system back goes one level out at a time.
+ */
+@Composable
+fun SettingsCategoryScreen(
+    categoryId: String,
+    modifier: Modifier = Modifier,
+    onBack: () -> Unit = {},
+    onOpenCategory: (String) -> Unit = {},
     onGoHome: () -> Unit = {},
 ) {
-    var selectedCategory by remember { mutableStateOf<String?>(null) }
-
-    when (selectedCategory) {
-        null -> {
-            CategoryListScreen(
-                onBack = onBack,
-                onCategoryClick = { selectedCategory = it },
-                modifier = modifier,
-            )
-        }
-        "backup" -> {
-            BackupRestoreScreen(
-                onBack = onBack,
-            )
-        }
-        "advanced" -> {
-            AdvancedSettings(
-                onBack = onBack,
-            )
-        }
-        "data_import_export" -> {
-            DataImportExportScreen(
-                onBack = onBack,
-            )
-        }
-        "font_selection" -> {
-            FontSelectionScreen(
-                onBack = onBack,
-            )
-        }
-        "font_import" -> {
-            FontImportScreen(
-                onBack = onBack,
-            )
-        }
-        "download_audio" -> {
-            DownloadAudioScreen(
-                onBack = onBack,
-            )
-        }
-        "keyboard_help" -> {
-            KeyboardHelpScreen(
-                onOpenKeyboardSettings = { selectedCategory = "keyboard" },
-                onBack = onBack,
-                modifier = modifier,
-            )
-        }
-        else -> {
-            CategoryDetailScreen(
-                categoryId = selectedCategory!!,
-                onBack = onBack,
-                onOpenCategory = { selectedCategory = it },
-                onOpenThemeCustomization = onOpenThemeCustomization,
-                onGoHome = onGoHome,
-            )
-        }
+    when (categoryId) {
+        "backup" -> BackupRestoreScreen(onBack = onBack)
+        "advanced" -> AdvancedMainScreen(onBack = onBack, onOpenSub = onOpenCategory)
+        "advanced_lesson_settings" -> AdvancedLessonSettings(onBack = onBack)
+        "advanced_review_settings" -> AdvancedReviewSettings(onBack = onBack)
+        "advanced_self_study_settings" -> AdvancedSelfStudySettings(onBack = onBack)
+        "advanced_other_settings" -> AdvancedOtherSettings(onBack = onBack)
+        "data_import_export" -> DataImportExportScreen(onBack = onBack)
+        "font_selection" -> FontSelectionScreen(onBack = onBack)
+        "font_import" -> FontImportScreen(onBack = onBack)
+        "download_audio" -> DownloadAudioScreen(onBack = onBack)
+        "keyboard_help" -> KeyboardHelpScreen(
+            onOpenKeyboardSettings = { onOpenCategory("keyboard") },
+            onBack = onBack,
+            modifier = modifier,
+        )
+        "theme_customization" -> ThemeCustomizationScreen(onBack = onBack)
+        else -> CategoryDetailScreen(
+            categoryId = categoryId,
+            onBack = onBack,
+            onOpenCategory = onOpenCategory,
+            onGoHome = onGoHome,
+        )
     }
 }
 
@@ -261,7 +248,6 @@ private fun CategoryDetailScreen(
     categoryId: String,
     onBack: () -> Unit,
     onOpenCategory: (String) -> Unit,
-    onOpenThemeCustomization: () -> Unit,
     onGoHome: () -> Unit,
 ) {
     val title = when (categoryId) {
@@ -293,7 +279,9 @@ private fun CategoryDetailScreen(
         ) {
             when (categoryId) {
                 "api" -> ApiSettings()
-                "display" -> DisplaySettings(onOpenThemeCustomization = onOpenThemeCustomization)
+                "display" -> DisplaySettings(
+                    onOpenThemeCustomization = { onOpenCategory("theme_customization") },
+                )
                 "dashboard" -> DashboardSettings()
                 "subject_info" -> SubjectInfoSettings()
                 "audio" -> AudioSettings()
@@ -1602,25 +1590,9 @@ private fun OtherActionsSettings(
 //
 
 /**
- * Advanced settings: a global unlock switch with a first-enable warning
- * dialog, and four sub-sections that are only visible when unlocked.
- */
-@Composable
-private fun AdvancedSettings(onBack: () -> Unit) {
-    var subCategory by remember { mutableStateOf<String?>(null) }
-
-    when (subCategory) {
-        "advanced_lesson_settings" -> AdvancedLessonSettings(onBack = { subCategory = null })
-        "advanced_review_settings" -> AdvancedReviewSettings(onBack = { subCategory = null })
-        "advanced_self_study_settings" -> AdvancedSelfStudySettings(onBack = { subCategory = null })
-        "advanced_other_settings" -> AdvancedOtherSettings(onBack = { subCategory = null })
-        else -> AdvancedMainScreen(onBack = onBack, onOpenSub = { subCategory = it })
-    }
-}
-
-/**
  * The main advanced settings screen: the unlock switch plus links to the
- * four advanced sub-sections.
+ * four advanced sub-sections. The sub-sections are separate screens on the
+ * navigation stack, opened via [onOpenSub].
  */
 @Composable
 private fun AdvancedMainScreen(
