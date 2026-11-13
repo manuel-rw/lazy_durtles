@@ -7,7 +7,14 @@ import android.os.Build
 import android.provider.Settings
 import android.widget.ImageView
 import android.widget.Toast
+import com.lazy_durtles.wk.Constants
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.clickable
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,7 +32,7 @@ import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Email
+
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -37,11 +44,12 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
@@ -66,6 +74,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.viewinterop.AndroidView
@@ -75,7 +84,7 @@ import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.lazy_durtles.wk.BuildConfig
-import com.lazy_durtles.wk.Constants
+
 import com.lazy_durtles.wk.GlobalSettings
 import com.lazy_durtles.wk.Identification
 import com.lazy_durtles.wk.R
@@ -145,11 +154,6 @@ fun SettingsScreen(
                 onBack = onBack,
             )
         }
-        "support" -> {
-            SupportScreen(
-                onBack = onBack,
-            )
-        }
         "keyboard_help" -> {
             KeyboardHelpScreen(
                 onOpenKeyboardSettings = { selectedCategory = "keyboard" },
@@ -194,7 +198,6 @@ private val CATEGORIES = listOf(
     SettingsCategory("advanced", "Advanced settings", "For experienced users", Icons.Filled.Build),
     SettingsCategory("other_actions", "Other actions", "Data import/export, resets", Icons.Filled.Delete),
     SettingsCategory("backup", "Backup and restore", "Export settings to a file, or import a backup", R.drawable.ic_backup_24dp),
-    SettingsCategory("support", "Support / feedback", "Get help or send feedback", Icons.Filled.Email),
     SettingsCategory("about", "About", "About this app", Icons.Filled.Info),
 )
 
@@ -227,7 +230,7 @@ private fun CategoryListScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onCategoryClick(category.id) }
+                            .clickable(onClick = { onCategoryClick(category.id) })
                             .padding(horizontal = 16.dp, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -2157,6 +2160,16 @@ private val SPECIAL_BUTTON_OPTIONS = listOf(
     Pair("Toggle lightning mode", "TOGGLE_LIGHTNING_MODE"),
 )
 
+// About sections
+enum class AboutSectionType {
+    INFO,
+    LINK,
+    SUPPORT,
+    OPEN_SOURCE,
+    FONTS,
+    INFLUENCES,
+}
+
 private val SUBJECT_CARD_LAYOUT_OPTIONS = listOf(
     Pair("Normal", "NORMAL"),
     Pair("Compact with progression info", "COMPACT"),
@@ -2168,152 +2181,6 @@ private val SUBJECT_CARD_LAYOUT_OPTIONS = listOf(
 //
 
 private const val ABOUT_URL_TAG = "URL"
-
-/**
- * The About page, a port of the legacy AboutActivity content from
- * Constants.ABOUT_DOCUMENT.
- */
-@Composable
-private fun AboutSettings() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        // The welcome banner is an animated GIF; painterResource() cannot load
-        // it (it casts the drawable to BitmapDrawable and crashes on API 28+),
-        // so render it through Glide like the legacy AboutActivity does.
-        AndroidView(
-            modifier = Modifier.fillMaxWidth(),
-            factory = { context ->
-                ImageView(context).apply {
-                    adjustViewBounds = true
-                    Glide.with(context)
-                        .asGif()
-                        .load(R.drawable.welcome)
-                        .apply(RequestOptions.bitmapTransform(RoundedCornersTransformation(30, 0)))
-                        .into(this)
-                }
-            },
-            onRelease = { view ->
-                try {
-                    Glide.with(view).clear(view)
-                }
-                catch (ignored: IllegalArgumentException) {
-                    // Glide refuses destroyed activities; it cleans up its own
-                    // requests in that case anyway.
-                }
-            },
-        )
-
-        Text(
-            text = "Welcome to ${Identification.APP_NAME} ${BuildConfig.VERSION_NAME}!",
-            style = MaterialTheme.typography.titleMedium,
-        )
-
-        aboutParagraph(
-            listOf(
-                AboutSegment("${Identification.APP_NAME} is an app for "),
-                AboutSegment("WaniKani", "https://www.wanikani.com/"),
-                AboutSegment(", the kanji learning service created by "),
-                AboutSegment("Tofugu", "https://www.tofugu.com/"),
-                AboutSegment("."),
-            ),
-        )
-
-        aboutParagraph(
-            listOf(
-                AboutSegment("Are you new to WaniKani? Check out their "),
-                AboutSegment("knowledge base", "https://knowledge.wanikani.com/"),
-                AboutSegment(" for more information."),
-            ),
-        )
-
-        aboutParagraph(
-            listOf(
-                AboutSegment("${Identification.APP_NAME} was re-coded by ${Identification.AUTHOR_NAME} (known as Joeni) <"),
-                AboutSegment(Identification.AUTHOR_EMAIL, "mailto:${Identification.AUTHOR_EMAIL}"),
-                AboutSegment("> based on the original work of Ernst Jan Plugge who developed the original code."),
-            ),
-        )
-
-        aboutParagraph(
-            listOf(
-                AboutSegment(
-                    "This app will always be free and open source, but if you'd like to support the development, " +
-                        "you can do so by ",
-                ),
-                AboutSegment("donating", "https://ko-fi.com/jerrycooke"),
-                AboutSegment("."),
-            ),
-        )
-
-        aboutParagraph(
-            listOf(
-                AboutSegment("It has been independently developed, and is not supported by, affiliated with, or endorsed by Tofugu."),
-            ),
-        )
-
-        aboutParagraph(
-            listOf(
-                AboutSegment("${Identification.APP_NAME} has been independently developed, and is not supported by, affiliated with, or endorsed by Tofugu."),
-            ),
-        )
-
-        aboutList(
-            "This app uses these Open Source components:",
-            listOf(
-                listOf(AboutSegment("The Jackson Project", "https://github.com/FasterXML/jackson")),
-                listOf(AboutSegment("Lottie", "https://airbnb.io/lottie/")),
-                listOf(AboutSegment("JSoup", "https://jsoup.org/")),
-                listOf(AboutSegment("OkHttp", "https://square.github.io/okhttp/")),
-                listOf(AboutSegment("Pikolo color picker", "https://github.com/Madrapps/Pikolo")),
-                listOf(AboutSegment("KanjiVG", "https://github.com/KanjiVG/kanjivg")),
-            ),
-        )
-
-        aboutList(
-            "It was also heavily influenced by:",
-            listOf(
-                listOf(
-                    AboutSegment(
-                        "Tsurukame",
-                        "https://community.wanikani.com/t/ios-tsurukame-native-app-with-offline-lessons-and-reviews/30635",
-                    ),
-                ),
-                listOf(
-                    AboutSegment(
-                        "The WaniKani Developer Community",
-                        "https://community.wanikani.com/c/wanikani/api-and-third-party-apps",
-                    ),
-                ),
-            ),
-        )
-
-        aboutList(
-            "The following freely available fonts are included in unmodified form:",
-            listOf(
-                listOf(
-                    AboutSegment(
-                        "Sawarabi Mincho and Gothic, (C) mshio at the sawarabi-fonts project on OSDN",
-                        "https://sawarabi-fonts.osdn.jp/en/",
-                    ),
-                    AboutSegment(", covered by the "),
-                    AboutSegment("CC Attribution V3.0", "https://creativecommons.org/licenses/by/3.0/"),
-                    AboutSegment(" license."),
-                ),
-                listOf(
-                    AboutSegment("M+ P Type-1, (C) the M+ fonts project on OSDN", "https://mplus-fonts.osdn.jp/about-en.html"),
-                ),
-                listOf(AboutSegment("Kosugi, created by MOTOYA", "https://fonts.google.com/specimen/Kosugi")),
-                listOf(AboutSegment("Kosugi Maru, created by MOTOYA", "https://fonts.google.com/specimen/Kosugi+Maru")),
-                listOf(AboutSegment("Otsutome", "http://rooms.webcrow.jp/font/index.html")),
-                listOf(AboutSegment("851 Gochikakutto", "http://pm85122.onamae.jp/851Gkktt.html")),
-            ),
-        )
-    }
-}
 
 /**
  * A text segment of an About paragraph: plain text, or a link.
@@ -2360,15 +2227,349 @@ private fun aboutParagraph(segments: List<AboutSegment>) {
 }
 
 /**
- * A bulleted list of linked items with an intro line.
+ * A row with text and optional link in an About card.
  */
 @Composable
-private fun aboutList(intro: String, items: List<List<AboutSegment>>) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(text = intro, style = MaterialTheme.typography.bodyMedium)
-        Column(modifier = Modifier.padding(start = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            for (item in items) {
-                aboutParagraph(listOf(AboutSegment("• ")) + item)
+private fun AboutRow(text: String, link: AboutSegment? = null) {
+    if (link == null) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.fillMaxWidth()
+        )
+    } else {
+        val uriHandler = LocalUriHandler.current
+        val linkColor = MaterialTheme.colorScheme.primary
+
+        val annotatedText = buildAnnotatedString {
+            append(text)
+            pushStringAnnotation(ABOUT_URL_TAG, link.url!!)
+            withStyle(SpanStyle(color = linkColor)) {
+                append(link.text)
+            }
+            pop()
+        }
+
+        ClickableText(
+            text = annotatedText,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { offset ->
+                annotatedText.getStringAnnotations(ABOUT_URL_TAG, offset, offset)
+                    .firstOrNull()
+                    ?.let { uriHandler.openUri(it.item) }
+            }
+        )
+    }
+}
+
+/**
+ * The About page, a redesign of the legacy AboutActivity content using Material 3.
+ */
+@Composable
+private fun AboutSettings() {
+    val uriHandler = LocalUriHandler.current
+    val linkColor = MaterialTheme.colorScheme.primary
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        // The welcome banner is an animated GIF; painterResource() cannot load
+        // it (it casts the drawable to BitmapDrawable and crashes on API 28+),
+        // so render it through Glide like the legacy AboutActivity does.
+        AndroidView(
+            modifier = Modifier.fillMaxWidth(),
+            factory = { context ->
+                ImageView(context).apply {
+                    adjustViewBounds = true
+                    Glide.with(context)
+                        .asGif()
+                        .load(R.drawable.welcome)
+                        .apply(RequestOptions.bitmapTransform(RoundedCornersTransformation(30, 0)))
+                        .into(this)
+                }
+            },
+            onRelease = { view ->
+                try {
+                    Glide.with(view).clear(view)
+                }
+                catch (ignored: IllegalArgumentException) {
+                    // Glide refuses destroyed activities; it cleans up its own
+                    // requests in that case anyway.
+                }
+            },
+        )
+
+        // App info card
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(
+                    text = "Welcome to ${Identification.APP_NAME} ${BuildConfig.VERSION_NAME}!",
+                    style = MaterialTheme.typography.titleLarge,
+                )
+                aboutParagraph(
+                    listOf(
+                        AboutSegment("${Identification.APP_NAME} is an app for "),
+                        AboutSegment("WaniKani", "https://www.wanikani.com/"),
+                        AboutSegment(", the kanji learning service created by "),
+                        AboutSegment("Tofugu", "https://www.tofugu.com/"),
+                        AboutSegment("."),
+                    ),
+                )
+                aboutParagraph(
+                    listOf(
+                        AboutSegment("Are you new to WaniKani? Check out their "),
+                        AboutSegment("knowledge base", "https://knowledge.wanikani.com/"),
+                        AboutSegment(" for more information."),
+                    ),
+                )
+            }
+        }
+
+        // Credits and development card
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(
+                    text = "Credits",
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                aboutParagraph(
+                    listOf(
+                        AboutSegment(
+                            "${Identification.APP_NAME} was re-coded by ",
+                        ),
+                        AboutSegment(
+                            Identification.AUTHOR_NAME,
+                            "https://github.com/${Identification.AUTHOR_USERNAME}",
+                        ),
+                        AboutSegment(" based on the original work of "),
+                        AboutSegment(
+                            "Ernst Jan Plugge",
+                            "https://github.com/erjanp/OriginalWaniKaniAndroid",
+                        ),
+                        AboutSegment(" who developed the original code."),
+                    ),
+                )
+            }
+        }
+
+        aboutParagraph(
+            listOf(
+                AboutSegment(
+                    "This app will always be free and open source, but if you'd like to support the development, " +
+                        "you can do so by ",
+                ),
+                AboutSegment("donating", "https://ko-fi.com/jerrycooke"),
+                AboutSegment("."),
+            ),
+        )
+
+        aboutParagraph(
+            listOf(
+                AboutSegment("It has been independently developed, and is not supported by, affiliated with, or endorsed by Tofugu."),
+            ),
+        )
+
+        aboutParagraph(
+            listOf(
+                AboutSegment("${Identification.APP_NAME} has been independently developed, and is not supported by, affiliated with, or endorsed by Tofugu."),
+            ),
+        )
+
+        // Open Source components card
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Text(
+                    text = "Open Source Components",
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    aboutParagraph(
+                        listOf(
+                            AboutSegment(
+                                "This app uses these Open Source components: ",
+                            ),
+                            AboutSegment(
+                                "The Jackson Project",
+                                "https://github.com/FasterXML/jackson",
+                            ),
+                            AboutSegment(", "),
+                            AboutSegment(
+                                "Lottie",
+                                "https://airbnb.io/lottie/",
+                            ),
+                            AboutSegment(", "),
+                            AboutSegment(
+                                "JSoup",
+                                "https://jsoup.org/",
+                            ),
+                            AboutSegment(", "),
+                            AboutSegment(
+                                "OkHttp",
+                                "https://square.github.io/okhttp/",
+                            ),
+                            AboutSegment(", "),
+                            AboutSegment(
+                                "Pikolo color picker",
+                                "https://github.com/Madrapps/Pikolo",
+                            ),
+                            AboutSegment(", and "),
+                            AboutSegment(
+                                "KanjiVG",
+                                "https://github.com/KanjiVG/kanjivg",
+                            ),
+                        ),
+                    )
+                    aboutParagraph(
+                        listOf(
+                            AboutSegment(
+                                "It was also heavily influenced by: ",
+                            ),
+                            AboutSegment(
+                                "Tsurukame",
+                                "https://community.wanikani.com/t/ios-tsurukame-native-app-with-offline-lessons-and-reviews/30635",
+                            ),
+                            AboutSegment(", and "),
+                            AboutSegment(
+                                "The WaniKani Developer Community",
+                                "https://community.wanikani.com/c/wanikani/api-and-third-party-apps",
+                            ),
+                        ),
+                    )
+                }
+            }
+        }
+
+        // Fonts card
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Text(
+                    text = "Fonts",
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                aboutParagraph(
+                    listOf(
+                        AboutSegment(
+                            "The following freely available fonts are included in unmodified form: ",
+                        ),
+                        AboutSegment(
+                            "Sawarabi Mincho and Gothic, ",
+                        ),
+                        AboutSegment(
+                            "(C) mshio",
+                            "https://sawarabi-fonts.osdn.jp/en/",
+                        ),
+                        AboutSegment(
+                            ", covered by the ",
+                        ),
+                        AboutSegment(
+                            "CC Attribution V3.0",
+                            "https://creativecommons.org/licenses/by/3.0/",
+                        ),
+                        AboutSegment(" license."),
+                    ),
+                )
+                aboutParagraph(
+                    listOf(
+                        AboutSegment(
+                            "M+ P Type-1, ",
+                        ),
+                        AboutSegment(
+                            "(C) the M+ fonts project",
+                            "https://mplus-fonts.osdn.jp/about-en.html",
+                        ),
+                    ),
+                )
+                aboutParagraph(
+                    listOf(
+                        AboutSegment("Kosugi, "),
+                    ),
+                )
+                aboutParagraph(
+                    listOf(
+                        AboutSegment(
+                            "created by ",
+                        ),
+                        AboutSegment(
+                            "MOTOYA",
+                            "https://fonts.google.com/specimen/Kosugi",
+                        ),
+                    ),
+                )
+                aboutParagraph(
+                    listOf(
+                        AboutSegment("Kosugi Maru, "),
+                    ),
+                )
+                aboutParagraph(
+                    listOf(
+                        AboutSegment(
+                            "created by ",
+                        ),
+                        AboutSegment(
+                            "MOTOYA",
+                            "https://fonts.google.com/specimen/Kosugi+Maru",
+                        ),
+                    ),
+                )
+                aboutParagraph(
+                    listOf(
+                        AboutSegment("Otsutome, "),
+                    ),
+                )
+                aboutParagraph(
+                    listOf(
+                        AboutSegment(
+                            "https://rooms.webcrow.jp/font/index.html",
+                            "https://rooms.webcrow.jp/font/index.html",
+                        ),
+                    ),
+                )
+                aboutParagraph(
+                    listOf(
+                        AboutSegment("851 Gochikakutto, "),
+                    ),
+                )
+                aboutParagraph(
+                    listOf(
+                        AboutSegment(
+                            "https://pm85122.onamae.jp/851Gkktt.html",
+                            "https://pm85122.onamae.jp/851Gkktt.html",
+                        ),
+                    ),
+                )
             }
         }
     }
