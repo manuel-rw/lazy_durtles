@@ -173,9 +173,8 @@ public final class Constants {
             + " service created by <a href=\"https://www.tofugu.com/\">Tofugu</a>.<br/><br/>"
             + " Are you new to WaniKani? Check out their <a href=\"https://knowledge.wanikani.com/\">knowledge base</a>"
             + " for more information.<br/><br/> "
-            + Identification.APP_NAME + " was re-coded by " + Identification.AUTHOR_NAME + " (known as Joeni) &lt;<a href=\"mailto:" + Identification.AUTHOR_EMAIL
-            + "\">" + Identification.AUTHOR_EMAIL + "</a>&gt; based on the original work of Ernst Jan Plugge who developed the original code. <br/><br/>"
-            + "This app will always be free and open source, but if you'd like to support the development, you can do so by <a href='https://ko-fi.com/jerrycooke' target='_blank'>donating</a>. <br/><br/>"
+            + Identification.APP_NAME + " was re-coded by " + Identification.AUTHOR_NAME + " based on the original work of Ernst Jan Plugge who developed the original code. <br/><br/>"
+            + "This app will always be free and open source, but if you'd like to support the development, you can do so by <a href='https://ko-fi.com/manuel-rw' target='_blank'>donating</a>. <br/><br/>"
             + "It has been independently developed, and is not supported by, affiliated with, or endorsed by Tofugu.<br/><br/>"
             + Identification.APP_NAME + " has been independently developed, and is not supported by, affiliated with, or endorsed by Tofugu. <br/><br/>"
             + "Tis app uses these Open Source components:<ul>"
@@ -200,22 +199,6 @@ public final class Constants {
             + " <li>&nbsp;<a href=\"http://pm85122.onamae.jp/851Gkktt.html\">851 Gochikakutto</a>."
             + "</ul>";
 
-    /**
-     * Document to show on the support/feedback screen.
-     */
-    public static final String SUPPORT_DOCUMENT = "<h3>Welcome to " + Identification.APP_NAME + " " + BuildConfig.VERSION_NAME + "!</h3><br/> "
-            + " If you are having problems with this app, the best way to get support is to post to the"
-            + " <a href=\"" + Identification.SUPPORT_URL + "\">support thread on the forums</a>.<br/><br/>"
-            + " On the forums I can most effectively help you resolve your problems, and you can get in touch with other"
-            + " users as well.<br/><br/>"
-            + " Alternatively, you can send email to"
-            + " <a href=\"mailto:" + Identification.AUTHOR_EMAIL + "\">" + Identification.AUTHOR_EMAIL + "</a>.<br/><br/>"
-            + " If you are having problems with the WaniKani service itself, check out their"
-            + " <a href=\"https://knowledge.wanikani.com/\">knowledge base</a>, you will find answers to a lot of questions there.<br/><br/>"
-            + " If you want to leave a review, please feel free to do so"
-            + " <a href=\"" + Identification.STORE_URL + "\">on the Play Store</a>. I appreciate all honest feedback, regardless of the score"
-            + " you want to give, but keep in mind that a store review is not an effective way to get app issues resolved."
-            + " To have your issues addressed, please use the forums or email instead (or in addition to the review).";
 
     /**
      * The 'here be dragons' warning before allowing the user to change advanced settings.
