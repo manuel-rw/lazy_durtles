@@ -2241,20 +2241,21 @@ private fun AboutRow(text: String, link: AboutSegment? = null) {
     } else {
         val uriHandler = LocalUriHandler.current
         val linkColor = MaterialTheme.colorScheme.primary
+        val annotatedText = buildAnnotatedString {
+            append(text)
+            pushStringAnnotation(ABOUT_URL_TAG, link.url)
+            withStyle(SpanStyle(color = linkColor)) {
+                append(link.text)
+            }
+            pop()
+        }
 
         ClickableText(
-            text = buildAnnotatedString {
-                append(text)
-                pushStringAnnotation(ABOUT_URL_TAG, link.url)
-                withStyle(SpanStyle(color = linkColor)) {
-                    append(link.text)
-                }
-                pop()
-            },
+            text = annotatedText,
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.fillMaxWidth(),
             onClick = { offset ->
-                text.getStringAnnotations(ABOUT_URL_TAG, offset, offset)
+                annotatedText.getStringAnnotations(ABOUT_URL_TAG, offset, offset)
                     .firstOrNull()
                     ?.let { uriHandler.openUri(it.item) }
             }
