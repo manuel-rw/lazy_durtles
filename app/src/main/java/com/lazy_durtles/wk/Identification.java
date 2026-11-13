@@ -42,7 +42,7 @@ public final class Identification {
     /**
      * The email address of the author.
      */
-    public static final String AUTHOR_EMAIL = "30572287+manuel-rw@users.noreply.github.com";
+    public static final String AUTHOR_EMAIL = "manuel-rw@example.com";
 
     /**
      * The WaniKani username of the author.
