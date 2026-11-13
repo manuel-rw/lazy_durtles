@@ -32,3 +32,8 @@ With contributions from:
 ## License
 
 See [LICENSE.md](LICENSE.md). The source code is licensed under the Apache License 2.0. The names "Flaming Durtles" and "Smouldering Durtles" are trademarks of their respective authors and are not covered by that license - which is why this fork carries a new name.
+
+## Disclosure
+
+> [!NOTE]
+> My usual technologies are not within the Android space. Hence this fork was developed using AI. Mistral and FOSS models were used.
