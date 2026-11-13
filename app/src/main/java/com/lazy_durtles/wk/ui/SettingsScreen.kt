@@ -2352,33 +2352,12 @@ private fun AboutSettings() {
                             Identification.AUTHOR_NAME,
                             "https://github.com/${Identification.AUTHOR_USERNAME}",
                         ),
-                        AboutSegment(
-                            " (<"),
-                        ),
-                        AboutSegment(
-                            Identification.AUTHOR_EMAIL,
-                            "mailto:${Identification.AUTHOR_EMAIL}",
-                        ),
-                        AboutSegment(
-                            "> based on the original work of ",
-                        ),
+                        AboutSegment(" based on the original work of "),
                         AboutSegment(
                             "Ernst Jan Plugge",
                             "https://github.com/erjanp/OriginalWaniKaniAndroid",
                         ),
-                        AboutSegment(
-                            " who developed the original code.",
-                        ),
-                    ),
-                )
-                aboutParagraph(
-                    listOf(
-                        AboutSegment("The app is currently developed by "),
-                        AboutSegment(
-                            Identification.AUTHOR_NAME,
-                            "https://github.com/${Identification.AUTHOR_USERNAME}",
-                        ),
-                        AboutSegment("."),
+                        AboutSegment(" who developed the original code."),
                     ),
                 )
             }
@@ -2404,7 +2383,7 @@ private fun AboutSettings() {
                             "This app will always be free and open source, but if you'd like to support the development, " +
                                     "you can do so by ",
                         ),
-                        AboutSegment("donating", "https://ko-fi.com/jerrycooke"),
+                        AboutSegment("donating", "https://ko-fi.com/manuel-rw"),
                         AboutSegment("."),
                     ),
                 )
@@ -2421,12 +2400,10 @@ private fun AboutSettings() {
                 )
                 aboutParagraph(
                     listOf(
+                        AboutSegment("For any other issues, check out the "),
                         AboutSegment(
-                            "For any other issues, please email ",
-                        ),
-                        AboutSegment(
-                            Identification.AUTHOR_EMAIL,
-                            "mailto:${Identification.AUTHOR_EMAIL}",
+                            Identification.SUPPORT_URL,
+                            Identification.SUPPORT_URL,
                         ),
                     ),
                 )

@@ -173,9 +173,8 @@ public final class Constants {
             + " service created by <a href=\"https://www.tofugu.com/\">Tofugu</a>.<br/><br/>"
             + " Are you new to WaniKani? Check out their <a href=\"https://knowledge.wanikani.com/\">knowledge base</a>"
             + " for more information.<br/><br/> "
-            + Identification.APP_NAME + " was re-coded by " + Identification.AUTHOR_NAME + " (known as Joeni) &lt;<a href=\"mailto:" + Identification.AUTHOR_EMAIL
-            + "\">" + Identification.AUTHOR_EMAIL + "</a>&gt; based on the original work of Ernst Jan Plugge who developed the original code. <br/><br/>"
-            + "This app will always be free and open source, but if you'd like to support the development, you can do so by <a href='https://ko-fi.com/jerrycooke' target='_blank'>donating</a>. <br/><br/>"
+            + Identification.APP_NAME + " was re-coded by " + Identification.AUTHOR_NAME + " based on the original work of Ernst Jan Plugge who developed the original code. <br/><br/>"
+            + "This app will always be free and open source, but if you'd like to support the development, you can do so by <a href='https://ko-fi.com/manuel-rw' target='_blank'>donating</a>. <br/><br/>"
             + "It has been independently developed, and is not supported by, affiliated with, or endorsed by Tofugu.<br/><br/>"
             + Identification.APP_NAME + " has been independently developed, and is not supported by, affiliated with, or endorsed by Tofugu. <br/><br/>"
             + "Tis app uses these Open Source components:<ul>"
