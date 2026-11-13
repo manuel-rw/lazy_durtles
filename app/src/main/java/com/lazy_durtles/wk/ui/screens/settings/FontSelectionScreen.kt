@@ -5,22 +5,21 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,6 +35,9 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.res.ResourcesCompat
 import com.lazy_durtles.wk.GlobalSettings
 import com.lazy_durtles.wk.R
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolIcon
+import com.lazy_durtles.wk.ui.screens.settings.SettingsRowDivider
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolsIcons
 import com.lazy_durtles.wk.util.FontStorageUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -92,8 +94,8 @@ fun FontSelectionScreen(
                 title = { Text(text = "Select fonts") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        MaterialSymbolIcon(
+                            icon = MaterialSymbolsIcons.ArrowBack,
                             contentDescription = "Back",
                         )
                     }
@@ -106,12 +108,35 @@ fun FontSelectionScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 8.dp),
+                .padding(horizontal = 16.dp),
         ) {
-            for (choice in staticChoices + dynamicChoices) {
-                FontSelectionRow(choice)
-                HorizontalDivider()
+            SettingsGroupHeader("Built-in fonts")
+            SettingsGroupCard {
+                staticChoices.forEachIndexed { index, choice ->
+                    FontSelectionRow(choice)
+                    if (index < staticChoices.lastIndex || dynamicChoices.isNotEmpty()) {
+                        SettingsRowDivider()
+                    }
+                }
             }
+            if (dynamicChoices.isNotEmpty()) {
+                SettingsGroupHeader("Imported fonts")
+                SettingsGroupCard {
+                    dynamicChoices.forEachIndexed { index, choice ->
+                        FontSelectionRow(choice)
+                        if (index < dynamicChoices.lastIndex) {
+                            SettingsRowDivider()
+                        }
+                    }
+                }
+            }
+            Text(
+                text = "Selected fonts are used together to render quiz question text; " +
+                    "if a font cannot render a subject, another selected font is used.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 16.dp),
+            )
         }
     }
 }
@@ -131,7 +156,7 @@ private fun FontSelectionRow(choice: FontChoice) {
                 selected = !selected
                 GlobalSettings.Font.setFontSelected(choice.fontId, selected)
             }
-            .padding(horizontal = 8.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(
@@ -140,7 +165,7 @@ private fun FontSelectionRow(choice: FontChoice) {
         ) {
             Text(
                 text = choice.name,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.bodyLarge,
             )
             Text(
                 text = "日本語の書体",
@@ -148,6 +173,7 @@ private fun FontSelectionRow(choice: FontChoice) {
                 fontFamily = choice.typeface?.let { FontFamily(it) },
             )
         }
+        Spacer(modifier = Modifier.width(8.dp))
         Switch(
             checked = selected,
             onCheckedChange = {

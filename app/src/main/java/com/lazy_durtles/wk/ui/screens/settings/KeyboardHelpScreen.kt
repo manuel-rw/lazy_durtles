@@ -7,12 +7,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolsIcons
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolIcon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -55,7 +55,7 @@ fun KeyboardHelpScreen(
                 title = { Text("Keyboard help") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        MaterialSymbolIcon(MaterialSymbolsIcons.ArrowBack, "Back")
                     }
                 },
             )
@@ -126,15 +126,11 @@ fun KeyboardHelpScreen(
     }
 
     confirmation?.let { message ->
-        AlertDialog(
-            onDismissRequest = { confirmation = null },
-            title = { Text("Keyboard settings updated") },
-            text = { Text(message) },
-            confirmButton = {
-                TextButton(onClick = { confirmation = null }) {
-                    Text("OK")
-                }
-            },
+        SettingsAlertDialog(
+            title = "Keyboard settings updated",
+            text = message,
+            icon = MaterialSymbolsIcons.CheckCircle,
+            onConfirm = { confirmation = null },
         )
     }
 }

@@ -15,12 +15,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
+import com.lazy_durtles.wk.R
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolsIcons
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolIcon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -33,13 +32,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.font.FontVariation
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
+import dev.tclement.fonticons.FontIconBitmap
+import dev.tclement.fonticons.rememberVariableIconFont
 import com.lazy_durtles.wk.livedata.LiveLevelDuration
 import com.lazy_durtles.wk.livedata.LiveReviewTotals
 import com.lazy_durtles.wk.livedata.LiveVacationMode
@@ -59,7 +66,6 @@ private const val DEFAULT_AVATAR_URL =
 fun ProfileScreen(
     onGoToSettings: () -> Unit,
     onViewSessionLog: () -> Unit = {},
-    onBackPressed: () -> Unit = { },
     modifier: Modifier = Modifier,
 ) {
     val levelDuration = LiveLevelDuration.getInstance().observeAsState()
@@ -93,8 +99,8 @@ fun ProfileScreen(
                 .align(Alignment.TopEnd)
                 .padding(4.dp),
         ) {
-            Icon(
-                imageVector = Icons.Default.Settings,
+            MaterialSymbolIcon(
+                icon = MaterialSymbolsIcons.Settings,
                 contentDescription = "Settings",
             )
         }
@@ -138,12 +144,30 @@ private fun ProfileAvatar(modifier: Modifier = Modifier) {
     // The default avatar is an SVG; Coil needs the SvgDecoder to render it.
     // Without it the image silently stays blank.
     val context = LocalContext.current
+    val density = LocalDensity.current
     val imageLoader = remember(context) {
         ImageLoader.Builder(context)
             .components { add(SvgDecoder.Factory()) }
             .build()
     }
-    val fallback = rememberVectorPainter(Icons.Default.Person)
+    @OptIn(ExperimentalTextApi::class)
+    val iconFont = rememberVariableIconFont(
+        resId = R.font.material_symbols_rounded,
+        weights = arrayOf(FontWeight.Normal),
+        fontVariationSettings = FontVariation.Settings(FontVariation.Setting("FILL", 1f)),
+    )
+    val fallback = remember(iconFont, context, density) {
+        BitmapPainter(
+            FontIconBitmap(
+                icon = MaterialSymbolsIcons.Person,
+                iconFont = iconFont,
+                tint = Color.Black,
+                context = context,
+                density = density,
+                size = 96.dp,
+            ).asImageBitmap(),
+        )
+    }
     AsyncImage(
         model = DEFAULT_AVATAR_URL,
         contentDescription = "Profile picture",
@@ -323,8 +347,8 @@ private fun ProfileLinkRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(text = label, style = MaterialTheme.typography.bodyMedium)
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+        MaterialSymbolIcon(
+            icon = MaterialSymbolsIcons.ChevronRight,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )

@@ -12,11 +12,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolsIcons
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolIcon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -201,8 +201,8 @@ fun DataImportExportScreen(
                 title = { Text(text = "Data import / export") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        MaterialSymbolIcon(
+                            icon = MaterialSymbolsIcons.ArrowBack,
                             contentDescription = "Back",
                         )
                     }

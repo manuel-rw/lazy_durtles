@@ -50,7 +50,6 @@ fun DashboardScreen(
     onSrsBucketClick: (bucket: Int) -> Unit,
     onLevelProgressEntryClick: (level: Int, type: SubjectType) -> Unit,
     onSubjectClick: (subjectId: Long, allIds: LongArray) -> Unit,
-    onBackPressed: () -> Unit = { },
     modifier: Modifier = Modifier,
 ) {
     // Observe the LiveData instances that drive the widgets.

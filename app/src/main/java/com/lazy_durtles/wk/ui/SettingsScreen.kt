@@ -1,5 +1,7 @@
 package com.lazy_durtles.wk.ui
+
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
@@ -7,76 +9,74 @@ import android.os.Build
 import android.provider.Settings
 import android.widget.ImageView
 import android.widget.Toast
-import com.lazy_durtles.wk.Constants
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Create
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
@@ -84,7 +84,7 @@ import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.lazy_durtles.wk.BuildConfig
-
+import com.lazy_durtles.wk.Constants
 import com.lazy_durtles.wk.GlobalSettings
 import com.lazy_durtles.wk.Identification
 import com.lazy_durtles.wk.R
@@ -93,85 +93,88 @@ import com.lazy_durtles.wk.jobs.FlushTasksJob
 import com.lazy_durtles.wk.jobs.ResetDatabaseJob
 import com.lazy_durtles.wk.livedata.LiveApiState
 import com.lazy_durtles.wk.services.JobRunnerService
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolIcon
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolsIcons
 import com.lazy_durtles.wk.ui.screens.settings.DataImportExportScreen
 import com.lazy_durtles.wk.ui.screens.settings.DownloadAudioScreen
 import com.lazy_durtles.wk.ui.screens.settings.FontImportScreen
 import com.lazy_durtles.wk.ui.screens.settings.FontSelectionScreen
+import com.lazy_durtles.wk.ui.screens.settings.HtmlNoticeBanner
 import com.lazy_durtles.wk.ui.screens.settings.HtmlNoticeText
 import com.lazy_durtles.wk.ui.screens.settings.KeyboardHelpScreen
+import com.lazy_durtles.wk.ui.screens.settings.SettingHighlightShape
+import com.lazy_durtles.wk.ui.screens.settings.SettingsAlertDialog
+import com.lazy_durtles.wk.ui.screens.settings.SettingsDialogShape
+import com.lazy_durtles.wk.ui.screens.settings.SettingsGroupCard
+import com.lazy_durtles.wk.ui.screens.settings.SettingsGroupHeader
+import com.lazy_durtles.wk.ui.screens.settings.SettingsRowDivider
+import com.lazy_durtles.wk.ui.screens.settings.SettingsSelectDialog
+import com.lazy_durtles.wk.ui.screens.settings.ThemeCustomizationScreen
+import com.lazy_durtles.wk.ui.screens.settings.TonalIcon
+import com.lazy_durtles.wk.ui.screens.settings.highlightContainerColor
 import jp.wasabeef.glide.transformations.RoundedCornersTransformation
+import kotlinx.coroutines.delay
 import java.util.Locale
 
 /**
- * Settings screen. Shows a list of setting categories; each category opens a
- * detail screen with the settings for that group. All values are persisted
+ * Settings screen. Shows the grouped list of setting categories with a search
+ * field at the top, in the Material Expressive 3 style; each category is
+ * opened as its own screen on the navigation stack via [onOpenCategory]
+ * (category id, optional setting key to highlight). All values are persisted
  * immediately via GlobalSettings / SharedPreferences.
  */
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
-    onOpenThemeCustomization: () -> Unit = {},
-    onGoHome: () -> Unit = {},
+    onOpenCategory: (String, String?) -> Unit = { _, _ -> },
 ) {
-    var selectedCategory by remember { mutableStateOf<String?>(null) }
+    CategoryListScreen(
+        onBack = onBack,
+        onCategoryClick = onOpenCategory,
+        modifier = modifier,
+    )
+}
 
-    when (selectedCategory) {
-        null -> {
-            CategoryListScreen(
-                onBack = onBack,
-                onCategoryClick = { selectedCategory = it },
-                modifier = modifier,
-            )
-        }
-        "backup" -> {
-            BackupRestoreScreen(
-                onBack = onBack,
-            )
-        }
-        "advanced" -> {
-            AdvancedSettings(
-                onBack = onBack,
-            )
-        }
-        "data_import_export" -> {
-            DataImportExportScreen(
-                onBack = onBack,
-            )
-        }
-        "font_selection" -> {
-            FontSelectionScreen(
-                onBack = onBack,
-            )
-        }
-        "font_import" -> {
-            FontImportScreen(
-                onBack = onBack,
-            )
-        }
-        "download_audio" -> {
-            DownloadAudioScreen(
-                onBack = onBack,
-            )
-        }
-        "keyboard_help" -> {
-            KeyboardHelpScreen(
-                onOpenKeyboardSettings = { selectedCategory = "keyboard" },
-                onBack = onBack,
-                modifier = modifier,
-            )
-        }
-        else -> {
-            CategoryDetailScreen(
-                categoryId = selectedCategory!!,
-                onBack = onBack,
-                onOpenCategory = { selectedCategory = it },
-                onOpenThemeCustomization = onOpenThemeCustomization,
-                onGoHome = onGoHome,
-            )
-        }
+/**
+ * One settings category: either a full sub-screen (backup, font selection,
+ * ...) or a declaratively rendered detail panel. Every level is its own entry
+ * on the navigation stack, so system back goes one level out at a time.
+ */
+@Composable
+fun SettingsCategoryScreen(
+    categoryId: String,
+    modifier: Modifier = Modifier,
+    onBack: () -> Unit = {},
+    onOpenCategory: (String, String?) -> Unit = { _, _ -> },
+    onGoHome: () -> Unit = {},
+    highlight: String? = null,
+) {
+    when (categoryId) {
+        "backup" -> BackupRestoreScreen(onBack = onBack)
+        "data_import_export" -> DataImportExportScreen(onBack = onBack)
+        "font_selection" -> FontSelectionScreen(onBack = onBack)
+        "font_import" -> FontImportScreen(onBack = onBack)
+        "download_audio" -> DownloadAudioScreen(onBack = onBack)
+        "keyboard_help" -> KeyboardHelpScreen(
+            onOpenKeyboardSettings = { onOpenCategory("keyboard", null) },
+            onBack = onBack,
+            modifier = modifier,
+        )
+        "theme_customization" -> ThemeCustomizationScreen(onBack = onBack)
+        else -> DefCategoryScreen(
+            categoryId = categoryId,
+            highlight = highlight,
+            onBack = onBack,
+            onOpenCategory = onOpenCategory,
+            onGoHome = onGoHome,
+        )
     }
 }
+
+//
+// Top-level category list.
+//
 
 /**
  * A category of settings shown in the top-level list.
@@ -180,36 +183,151 @@ private data class SettingsCategory(
     val id: String,
     val title: String,
     val description: String,
-    val icon: Any? = null, // ImageVector or drawable resource ID
-)
-
-private val CATEGORIES = listOf(
-    SettingsCategory("api", "API and audio download", "API token and network rules", Icons.Filled.Settings),
-    SettingsCategory("display", "Display", "Theme and question screen appearance", Icons.Filled.Star),
-    SettingsCategory("dashboard", "Dashboard", "What to show on the dashboard", Icons.Filled.Home),
-    SettingsCategory("subject_info", "Subject Info", "Presentation of subject info details", Icons.Filled.Info),
-    SettingsCategory("audio", "Audio", "Autoplay and voice settings", Icons.Filled.PlayArrow),
-    SettingsCategory("download_audio", "Download audio", "Download audio files for offline use", Icons.Filled.KeyboardArrowDown),
-    SettingsCategory("lesson_review", "Lesson / review", "Session size and question behavior", Icons.AutoMirrored.Filled.List),
-    SettingsCategory("keyboard", "Keyboard input", "Input method related settings", Icons.Filled.Edit),
-    SettingsCategory("font", "Font", "Font selection and sizes", Icons.Filled.Create),
-    SettingsCategory("other", "Notifications and other settings", "Search engines, notifications and miscellaneous", Icons.Filled.Notifications),
-    SettingsCategory("experimental", "Experimental (temporary) settings", "Short-term experiments, these will go away", Icons.Filled.Warning),
-    SettingsCategory("advanced", "Advanced settings", "For experienced users", Icons.Filled.Build),
-    SettingsCategory("other_actions", "Other actions", "Data import/export, resets", Icons.Filled.Delete),
-    SettingsCategory("backup", "Backup and restore", "Export settings to a file, or import a backup", R.drawable.ic_backup_24dp),
-    SettingsCategory("about", "About", "About this app", Icons.Filled.Info),
+    val icon: Any?, // Char (Material Symbols codepoint) or drawable resource ID
 )
 
 /**
- * The top-level list of setting categories.
+ * A visual group of related categories, rendered as its own card.
+ */
+private data class SettingsCategoryGroup(
+    val title: String,
+    val categories: List<SettingsCategory>,
+)
+
+private val CATEGORY_GROUPS = listOf(
+    SettingsCategoryGroup(
+        title = "Account",
+        categories = listOf(
+            SettingsCategory(
+                "api", "Login to WaniKani",
+                "API token, sync and network rules",
+                MaterialSymbolsIcons.Person,
+            ),
+        ),
+    ),
+    SettingsCategoryGroup(
+        title = "Audio",
+        categories = listOf(
+            SettingsCategory(
+                "audio", "Audio",
+                "Autoplay, voice and audio files",
+                MaterialSymbolsIcons.VolumeUp,
+            ),
+            SettingsCategory(
+                "download_audio", "Download audio",
+                "Download audio files for offline use",
+                MaterialSymbolsIcons.CloudDownload,
+            ),
+        ),
+    ),
+    SettingsCategoryGroup(
+        title = "Appearance",
+        categories = listOf(
+            SettingsCategory(
+                "display", "Display",
+                "Themes and quiz screen appearance",
+                MaterialSymbolsIcons.Palette,
+            ),
+            SettingsCategory(
+                "font", "Fonts",
+                "Font selection and sizes",
+                MaterialSymbolsIcons.FontDownload,
+            ),
+            SettingsCategory(
+                "dashboard", "Dashboard",
+                "What to show on the dashboard",
+                MaterialSymbolsIcons.SpaceDashboard,
+            ),
+        ),
+    ),
+    SettingsCategoryGroup(
+        title = "Study",
+        categories = listOf(
+            SettingsCategory(
+                "lesson_review", "Lessons and reviews",
+                "Session size, question behavior and advanced options",
+                MaterialSymbolsIcons.School,
+            ),
+            SettingsCategory(
+                "subject_info", "Subject info",
+                "Mnemonics, info dump and stroke order",
+                MaterialSymbolsIcons.MenuBook,
+            ),
+            SettingsCategory(
+                "keyboard", "Keyboard input",
+                "Input method related settings",
+                MaterialSymbolsIcons.Keyboard,
+            ),
+        ),
+    ),
+    SettingsCategoryGroup(
+        title = "General",
+        categories = listOf(
+            SettingsCategory(
+                "other", "Notifications and more",
+                "Notifications, search engines and misc",
+                MaterialSymbolsIcons.Notifications,
+            ),
+            SettingsCategory(
+                "experimental", "Experimental",
+                "Short-term experiments, these will go away",
+                MaterialSymbolsIcons.Science,
+            ),
+        ),
+    ),
+    SettingsCategoryGroup(
+        title = "Data",
+        categories = listOf(
+            SettingsCategory(
+                "backup", "Backup and restore",
+                "Export settings to a file, or import a backup",
+                MaterialSymbolsIcons.Backup,
+            ),
+            SettingsCategory(
+                "data_import_export", "Data import / export",
+                "Search presets and star ratings",
+                MaterialSymbolsIcons.SyncAlt,
+            ),
+            SettingsCategory(
+                "other_actions", "Maintenance",
+                "Flush background tasks and resets",
+                MaterialSymbolsIcons.Construction,
+            ),
+        ),
+    ),
+    SettingsCategoryGroup(
+        title = "About",
+        categories = listOf(
+            SettingsCategory(
+                "about", "About",
+                "About this app",
+                MaterialSymbolsIcons.Info,
+            ),
+        ),
+    ),
+)
+
+/**
+ * The top-level list of setting categories, with an Android-settings-style
+ * search field at the top. While the search field has focus, the category
+ * list is replaced by live search results with breadcrumbs.
  */
 @Composable
 private fun CategoryListScreen(
     onBack: () -> Unit,
-    onCategoryClick: (String) -> Unit,
+    onCategoryClick: (String, String?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var query by rememberSaveable { mutableStateOf("") }
+    var searchActive by rememberSaveable { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
+    val searchIndex = rememberSearchIndex()
+
+    BackHandler(enabled = searchActive) {
+        searchActive = false
+        focusManager.clearFocus()
+    }
+
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -221,46 +339,42 @@ private fun CategoryListScreen(
                 .fillMaxSize()
                 .padding(padding),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState()),
-            ) {
-                CATEGORIES.forEach { category ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(onClick = { onCategoryClick(category.id) })
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        when (val icon = category.icon) {
-                            is ImageVector -> Icon(
-                                imageVector = icon,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(end = 16.dp),
-                            )
-                            is Int -> Icon(
-                                painter = painterResource(icon),
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(end = 16.dp),
-                            )
-                        }
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = category.title,
-                                style = MaterialTheme.typography.bodyLarge,
-                            )
-                            Text(
-                                text = category.description,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+            SettingsSearchField(
+                query = query,
+                onQueryChange = { query = it },
+                active = searchActive,
+                onActiveChange = { searchActive = it },
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+            if (searchActive) {
+                SearchResults(
+                    query = query,
+                    index = searchIndex,
+                    onOpen = { entry ->
+                        searchActive = false
+                        focusManager.clearFocus()
+                        onCategoryClick(entry.categoryId, entry.key)
+                    },
+                )
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp),
+                ) {
+                    CATEGORY_GROUPS.forEach { group ->
+                        SettingsGroupHeader(group.title)
+                        SettingsGroupCard {
+                            group.categories.forEachIndexed { index, category ->
+                                CategoryRow(category) { onCategoryClick(category.id, null) }
+                                if (index < group.categories.lastIndex) {
+                                    SettingsRowDivider()
+                                }
+                            }
                         }
                     }
-                    HorizontalDivider()
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
             }
         }
@@ -268,136 +382,710 @@ private fun CategoryListScreen(
 }
 
 /**
- * A detail screen for one category of settings.
+ * The pill-shaped search field at the top of the settings list, styled like
+ * the one in the Android settings app.
  */
 @Composable
-private fun CategoryDetailScreen(
-    categoryId: String,
-    onBack: () -> Unit,
-    onOpenCategory: (String) -> Unit,
-    onOpenThemeCustomization: () -> Unit,
-    onGoHome: () -> Unit,
+private fun SettingsSearchField(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    active: Boolean,
+    onActiveChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val title = when (categoryId) {
-        "api" -> "API and audio download"
-        "display" -> "Display"
-        "dashboard" -> "Dashboard"
-        "subject_info" -> "Subject Info"
-        "audio" -> "Audio"
-        "lesson_review" -> "Lesson / review"
-        "keyboard" -> "Keyboard input"
-        "font" -> "Font"
-        "other" -> "Notifications and other settings"
-        "experimental" -> "Experimental (temporary) settings"
-        "other_actions" -> "Other actions"
-        "about" -> "About"
-        else -> "Settings"
+    val focusManager = LocalFocusManager.current
+    TextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .onFocusChanged { state ->
+                if (state.isFocused && !active) {
+                    onActiveChange(true)
+                }
+            },
+        placeholder = { Text(text = "Search settings") },
+        leadingIcon = {
+            if (active) {
+                IconButton(onClick = {
+                    onActiveChange(false)
+                    focusManager.clearFocus()
+                }) {
+                    MaterialSymbolIcon(
+                        icon = MaterialSymbolsIcons.ArrowBack,
+                        contentDescription = "Stop searching",
+                    )
+                }
+            } else {
+                MaterialSymbolIcon(
+                    icon = MaterialSymbolsIcons.Search,
+                    contentDescription = "Search",
+                )
+            }
+        },
+        trailingIcon = {
+            if (query.isNotEmpty()) {
+                IconButton(onClick = { onQueryChange("") }) {
+                    MaterialSymbolIcon(
+                        icon = MaterialSymbolsIcons.Close,
+                        contentDescription = "Clear search",
+                    )
+                }
+            }
+        },
+        shape = RoundedCornerShape(28.dp),
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent,
+        ),
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+    )
+}
+
+/**
+ * One searchable item: either a category, or an individual setting inside a
+ * category.
+ */
+private class SearchEntry(
+    val key: String?,
+    val title: String,
+    val summary: String,
+    val breadcrumb: String,
+    val categoryId: String,
+    val icon: Any?,
+)
+
+/**
+ * Builds the search index once: every category plus every individual setting
+ * declared in [categoryDefs], with a breadcrumb of where to find it.
+ */
+@Composable
+private fun rememberSearchIndex(): List<SearchEntry> {
+    val context = LocalContext.current
+    return remember(context) {
+        val entries = mutableListOf<SearchEntry>()
+        for (group in CATEGORY_GROUPS) {
+            for (category in group.categories) {
+                entries.add(
+                    SearchEntry(
+                        key = null,
+                        title = category.title,
+                        summary = category.description,
+                        breadcrumb = "Settings",
+                        categoryId = category.id,
+                        icon = category.icon,
+                    ),
+                )
+                for (defGroup in categoryDefs(category.id, context, { _, _ -> }, { }, { true })) {
+                    for (def in defGroup.items) {
+                        val breadcrumb = if (defGroup.header != null) {
+                            "${category.title} › ${defGroup.header}"
+                        } else {
+                            category.title
+                        }
+                        entries.add(
+                            SearchEntry(
+                                key = def.key,
+                                title = def.title,
+                                summary = def.summary,
+                                breadcrumb = breadcrumb,
+                                categoryId = category.id,
+                                icon = category.icon,
+                            ),
+                        )
+                    }
+                }
+            }
+        }
+        entries
+    }
+}
+
+/**
+ * Live search results, like the Android settings app: matching settings with
+ * their title and location breadcrumb, or all sections when the query is
+ * empty.
+ */
+@Composable
+private fun SearchResults(
+    query: String,
+    index: List<SearchEntry>,
+    onOpen: (SearchEntry) -> Unit,
+) {
+    val q = query.trim()
+    val matches = if (q.isEmpty()) {
+        index.filter { it.key == null && it.breadcrumb == "Settings" }
+    } else {
+        index.filter { entry ->
+            entry.title.contains(q, ignoreCase = true) ||
+                entry.summary.contains(q, ignoreCase = true) ||
+                entry.breadcrumb.contains(q, ignoreCase = true)
+        }
     }
 
-    Scaffold(
-        topBar = {
-            SettingsTopBar(title = title, onBack = onBack)
-        },
-    ) { padding ->
+    if (matches.isEmpty()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState()),
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            when (categoryId) {
-                "api" -> ApiSettings()
-                "display" -> DisplaySettings(onOpenThemeCustomization = onOpenThemeCustomization)
-                "dashboard" -> DashboardSettings()
-                "subject_info" -> SubjectInfoSettings()
-                "audio" -> AudioSettings()
-                "lesson_review" -> LessonReviewSettings()
-                "keyboard" -> KeyboardSettings(onOpenHelp = { onOpenCategory("keyboard_help") })
-                "font" -> FontSettings(onOpenCategory = onOpenCategory)
-                "other" -> OtherSettings()
-                "experimental" -> ExperimentalSettings()
-                "other_actions" -> OtherActionsSettings(
-                    onOpenDataImportExport = { onOpenCategory("data_import_export") },
-                    onOpenDownloadAudio = { onOpenCategory("download_audio") },
-                    onGoHome = onGoHome,
+            Text(
+                text = "No results for \u201C$q\u201D",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 32.dp),
+            )
+        }
+        return
+    }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+    ) {
+        if (q.isEmpty()) {
+            item {
+                Text(
+                    text = "Browse sections",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 8.dp),
                 )
-                "about" -> AboutSettings()
+            }
+        }
+        items(matches, key = { "${it.categoryId}:${it.key ?: "category"}" }) { entry ->
+            SearchResultRow(entry, onOpen)
+        }
+    }
+}
+
+/**
+ * One row in the search results: the category icon, the setting title, and a
+ * breadcrumb of where to find it.
+ */
+@Composable
+private fun SearchResultRow(
+    entry: SearchEntry,
+    onOpen: (SearchEntry) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(SettingHighlightShape)
+            .clickable { onOpen(entry) }
+            .padding(horizontal = 8.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        TonalIcon(entry.icon)
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = entry.title, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = entry.breadcrumb,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+/**
+ * One category row in the top-level list.
+ */
+@Composable
+private fun CategoryRow(
+    category: SettingsCategory,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        TonalIcon(category.icon)
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = category.title, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = category.description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        MaterialSymbolIcon(
+            icon = MaterialSymbolsIcons.ChevronRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+//
+// Declarative settings model.
+//
+
+/**
+ * A single setting, declared as data so the category screens, the search index
+ * and the search-highlight behavior all derive from one definition.
+ */
+private interface SettingDef {
+    /** Stable id, used for search results and search highlighting. */
+    val key: String?
+    val title: String
+    val summary: String
+
+    /** Whether the setting is currently shown; evaluated during composition. */
+    val visibleIf: (SharedPreferences) -> Boolean
+}
+
+private data class SwitchDef(
+    override val key: String,
+    override val title: String,
+    override val summary: String = "",
+    val prefKey: String,
+    val default: Boolean = false,
+    /** If set, turning the switch ON first asks for confirmation. */
+    val confirmTitle: String? = null,
+    val confirmHtml: String? = null,
+    override val visibleIf: (SharedPreferences) -> Boolean = { true },
+) : SettingDef
+
+private data class SelectDef(
+    override val key: String,
+    override val title: String,
+    override val summary: String = "",
+    val prefKey: String,
+    val default: String,
+    /** (label, value) pairs. */
+    val options: List<Pair<String, String>>,
+    val summarySuffix: String = "",
+    override val visibleIf: (SharedPreferences) -> Boolean = { true },
+) : SettingDef
+
+private data class SliderDef(
+    override val key: String,
+    override val title: String,
+    override val summary: String = "",
+    val range: ClosedFloatingPointRange<Float>,
+    val read: (SharedPreferences) -> Int,
+    val write: (Int, SharedPreferences) -> Unit,
+    val valueText: (Int) -> String = { it.toString() },
+    override val visibleIf: (SharedPreferences) -> Boolean = { true },
+) : SettingDef
+
+private data class TextFieldDef(
+    override val key: String,
+    override val title: String,
+    override val summary: String = "",
+    val prefKey: String,
+    val default: String = "",
+    val keyboardType: KeyboardType = KeyboardType.Text,
+    override val visibleIf: (SharedPreferences) -> Boolean = { true },
+) : SettingDef
+
+private data class ActionDef(
+    override val key: String,
+    override val title: String,
+    override val summary: String = "",
+    val navigates: Boolean = false,
+    val destructive: Boolean = false,
+    val onClick: () -> Unit = {},
+    /** If set, tapping the row first asks for confirmation via a dialog. */
+    val confirm: ConfirmSpec? = null,
+    val onConfirmed: () -> Unit = {},
+    override val visibleIf: (SharedPreferences) -> Boolean = { true },
+) : SettingDef
+
+private data class InfoDef(
+    override val key: String? = null,
+    override val title: String = "",
+    val html: String,
+    val icon: Any? = MaterialSymbolsIcons.Info,
+    override val summary: String = "",
+    override val visibleIf: (SharedPreferences) -> Boolean = { true },
+) : SettingDef
+
+private data class NumberRangeDef(
+    override val key: String,
+    override val title: String,
+    override val summary: String = "",
+    val prefKey: String,
+    val minKey: String,
+    override val visibleIf: (SharedPreferences) -> Boolean = { true },
+) : SettingDef
+
+private data class SearchEngineDef(
+    override val key: String,
+    override val title: String,
+    override val summary: String = "",
+    val prefKey: String,
+    val defaultUrl: String = "",
+    val defaultTag: String = "",
+    override val visibleIf: (SharedPreferences) -> Boolean = { true },
+) : SettingDef
+
+/**
+ * A confirmation dialog attached to an [ActionDef].
+ */
+private data class ConfirmSpec(
+    val title: String,
+    val text: String? = null,
+    val html: String? = null,
+    val icon: Any? = MaterialSymbolsIcons.Warning,
+    val confirmLabel: String = "Yes",
+    val dismissLabel: String = "No",
+    val destructive: Boolean = false,
+)
+
+/**
+ * A group of related settings, rendered as one rounded card with an optional
+ * header.
+ */
+private class SettingGroup(
+    val header: String?,
+    val items: List<SettingDef>,
+)
+
+private fun group(header: String?, vararg items: SettingDef) = SettingGroup(header, items.toList())
+
+/**
+ * The title of a declaratively rendered category screen.
+ */
+private fun categoryTitle(categoryId: String): String = when (categoryId) {
+    "api" -> "Login to WaniKani"
+    "audio" -> "Audio"
+    "display" -> "Display"
+    "dashboard" -> "Dashboard"
+    "lesson_review", "advanced" -> "Lessons and reviews"
+    "subject_info" -> "Subject info"
+    "keyboard" -> "Keyboard input"
+    "font" -> "Fonts"
+    "other" -> "Notifications and more"
+    "experimental" -> "Experimental"
+    "other_actions" -> "Maintenance"
+    "advanced_lesson_settings" -> "Advanced lesson settings"
+    "advanced_review_settings" -> "Advanced review settings"
+    "advanced_self_study_settings" -> "Advanced self-study settings"
+    "advanced_other_settings" -> "Other advanced settings"
+    else -> "Settings"
+}
+
+/**
+ * The declarative settings for one category id.
+ */
+private fun categoryDefs(
+    categoryId: String,
+    context: Context,
+    onOpenCategory: (String, String?) -> Unit,
+    onGoHome: () -> Unit,
+    apiStateOk: () -> Boolean,
+): List<SettingGroup> = when (categoryId) {
+    "api" -> apiSettingsGroups(apiStateOk)
+    "audio" -> audioSettingsGroups(onOpenCategory)
+    "display" -> displaySettingsGroups(onOpenCategory)
+    "dashboard" -> dashboardSettingsGroups()
+    "lesson_review", "advanced" -> lessonReviewSettingsGroups(onOpenCategory)
+    "subject_info" -> subjectInfoSettingsGroups()
+    "keyboard" -> keyboardSettingsGroups(onOpenCategory)
+    "font" -> fontSettingsGroups(onOpenCategory)
+    "other" -> otherSettingsGroups(context)
+    "experimental" -> experimentalSettingsGroups()
+    "other_actions" -> otherActionsSettingsGroups(context, onOpenCategory, onGoHome)
+    "advanced_lesson_settings" -> advancedLessonGroups()
+    "advanced_review_settings" -> advancedReviewGroups()
+    "advanced_self_study_settings" -> advancedSelfStudyGroups()
+    "advanced_other_settings" -> advancedOtherGroups()
+    else -> emptyList()
+}
+
+//
+// Rendering of declarative settings.
+//
+
+/**
+ * The default shared preferences, plus a version counter that increments on
+ * every settings change. Reading the counter's value during composition makes
+ * the reading scope recompose with fresh values.
+ */
+@Composable
+private fun rememberObservedPrefs(): Pair<SharedPreferences, MutableIntState> {
+    val context = LocalContext.current
+    val prefs = remember { PreferenceManager.getDefaultSharedPreferences(context) }
+    val version = remember { mutableIntStateOf(0) }
+    DisposableEffect(prefs) {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
+            version.intValue++
+        }
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        onDispose {
+            prefs.unregisterOnSharedPreferenceChangeListener(listener)
+        }
+    }
+    return prefs to version
+}
+
+/**
+ * Renders a list of setting groups: an optional header and a rounded card per
+ * group. When [highlight] names a setting, the screen scrolls to it and tints
+ * it briefly, like the Android settings app does after a search.
+ */
+@Composable
+private fun SettingGroups(
+    groups: List<SettingGroup>,
+    highlight: String?,
+    modifier: Modifier = Modifier,
+) {
+    val (prefs, versionState) = rememberObservedPrefs()
+    val scrollState = rememberScrollState()
+    val activeHighlight = remember { mutableStateOf(highlight) }
+    val rowTops = remember { mutableStateMapOf<String, Int>() }
+    val containerTop = remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(highlight) {
+        if (highlight == null) {
+            return@LaunchedEffect
+        }
+        var top: Int? = null
+        var attempts = 0
+        while (top == null && attempts < 120) {
+            top = rowTops[highlight]
+            if (top == null) {
+                delay(16)
+                attempts++
+            }
+        }
+        if (top != null) {
+            scrollState.animateScrollTo((top - 240).coerceIn(0, scrollState.maxValue))
+            delay(2400)
+        }
+        activeHighlight.value = null
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .onGloballyPositioned { coords ->
+                containerTop.intValue = coords.positionInRoot().y.toInt()
+            }
+            .verticalScroll(scrollState)
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 32.dp),
+    ) {
+        groups.forEach { group ->
+            val items = group.items.filter { it.visibleIf(prefs) }
+            if (items.isEmpty()) {
+                return@forEach
+            }
+            if (group.header != null) {
+                SettingsGroupHeader(group.header)
+            }
+            SettingsGroupCard {
+                items.forEachIndexed { index, def ->
+                    SettingRow(
+                        def = def,
+                        prefs = prefs,
+                        prefVersion = versionState.intValue,
+                        highlightKey = activeHighlight.value,
+                        rowTops = rowTops,
+                        containerTop = containerTop,
+                    )
+                    if (index < items.lastIndex) {
+                        SettingsRowDivider()
+                    }
+                }
             }
         }
     }
 }
 
-//
-// Reusable setting rows.
-//
+/**
+ * One setting row, wrapped in the search-highlight container.
+ */
+@Composable
+private fun SettingRow(
+    def: SettingDef,
+    prefs: SharedPreferences,
+    prefVersion: Int,
+    highlightKey: String?,
+    rowTops: MutableMap<String, Int>,
+    containerTop: MutableIntState,
+) {
+    val defKey = def.key
+    val highlighted = defKey != null && defKey == highlightKey
+    val backgroundColor = highlightContainerColor(highlighted)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(SettingHighlightShape)
+            .background(backgroundColor)
+            .then(
+                if (defKey == null) {
+                    Modifier
+                } else {
+                    Modifier.onGloballyPositioned { coords ->
+                        rowTops[defKey] = coords.positionInRoot().y.toInt() - containerTop.intValue
+                    }
+                },
+            ),
+    ) {
+        when (def) {
+            is SwitchDef -> SwitchRowContent(def, prefs)
+            is SelectDef -> SelectRowContent(def, prefs)
+            is SliderDef -> SliderRowContent(def, prefs)
+            is TextFieldDef -> TextFieldRowContent(def, prefs)
+            is ActionDef -> ActionRowContent(def)
+            is InfoDef -> InfoRowContent(def)
+            is NumberRangeDef -> NumberRangeRowContent(def, prefs)
+            is SearchEngineDef -> SearchEngineRowContent(def, prefs)
+        }
+    }
+}
 
 /**
  * A boolean setting rendered as a switch.
  */
 @Composable
-private fun SwitchRow(
-    title: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    summary: String = "",
-) {
-    var currentValue by remember(checked) { mutableStateOf(checked) }
+private fun SwitchRowContent(def: SwitchDef, prefs: SharedPreferences) {
+    var confirmEnable by remember { mutableStateOf(false) }
+    val checked = prefs.getBoolean(def.prefKey, def.default)
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { currentValue = !currentValue; onCheckedChange(currentValue) }
+            .clickable {
+                if (!checked && def.confirmTitle != null) {
+                    confirmEnable = true
+                } else {
+                    prefs.edit { putBoolean(def.prefKey, !checked) }
+                }
+            }
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, style = MaterialTheme.typography.bodyLarge)
-            if (summary.isNotEmpty()) {
+            Text(text = def.title, style = MaterialTheme.typography.bodyLarge)
+            if (def.summary.isNotEmpty()) {
                 Text(
-                    text = summary,
+                    text = def.summary,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
         Switch(
-            checked = currentValue,
-            onCheckedChange = { currentValue = it; onCheckedChange(it) },
+            checked = checked,
+            onCheckedChange = { newValue ->
+                if (newValue && def.confirmTitle != null) {
+                    confirmEnable = true
+                } else {
+                    prefs.edit { putBoolean(def.prefKey, newValue) }
+                }
+            },
+        )
+    }
+
+    if (confirmEnable) {
+        SettingsAlertDialog(
+            title = def.confirmTitle ?: "",
+            html = def.confirmHtml,
+            icon = MaterialSymbolsIcons.Warning,
+            confirmLabel = "Yes",
+            dismissLabel = "No",
+            onConfirm = {
+                confirmEnable = false
+                prefs.edit { putBoolean(def.prefKey, true) }
+            },
+            onDismiss = { confirmEnable = false },
         )
     }
 }
 
 /**
- * A numeric setting rendered as a slider.
+ * A setting with a fixed set of options. Opens a dialog with radio buttons
+ * when tapped; the summary shows the human-readable label of the current
+ * value.
  */
 @Composable
-private fun SliderRow(
-    title: String,
-    value: Int,
-    valueRange: ClosedFloatingPointRange<Float>,
-    onValueChange: (Int) -> Unit,
-    summary: String = "",
-) {
-    var sliderValue by remember(value) { mutableStateOf(value.toFloat()) }
+private fun SelectRowContent(def: SelectDef, prefs: SharedPreferences) {
+    var open by remember { mutableStateOf(false) }
+    val value = prefs.getString(def.prefKey, def.default) ?: def.default
+    val label = def.options.firstOrNull { it.second == value }?.first ?: value
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { open = true }
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+    ) {
+        Text(text = def.title, style = MaterialTheme.typography.bodyLarge)
+        Text(
+            text = label + def.summarySuffix,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+
+    if (open) {
+        SettingsSelectDialog(
+            title = def.title,
+            options = def.options,
+            selectedValue = value,
+            onSelect = { prefs.edit { putString(def.prefKey, it) } },
+            onDismiss = { open = false },
+        )
+    }
+}
+
+/**
+ * A numeric setting rendered as a slider, with the current value shown at the
+ * end of the title row.
+ */
+@Composable
+private fun SliderRowContent(def: SliderDef, prefs: SharedPreferences) {
+    val current = def.read(prefs)
+    var dragValue by remember(current) { mutableStateOf(current.toFloat()) }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
-        Text(text = "$title: ${sliderValue.toInt()}", style = MaterialTheme.typography.bodyLarge)
-        if (summary.isNotEmpty()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = summary,
+                text = def.title,
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = def.valueText(dragValue.toInt()),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+        if (def.summary.isNotEmpty()) {
+            Text(
+                text = def.summary,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         Slider(
-            value = sliderValue,
-            onValueChange = { sliderValue = it },
-            onValueChangeFinished = { onValueChange(sliderValue.toInt()) },
-            valueRange = valueRange,
+            value = dragValue,
+            onValueChange = { dragValue = it },
+            onValueChangeFinished = { def.write(dragValue.toInt(), prefs) },
+            valueRange = def.range,
         )
     }
 }
@@ -406,15 +1094,9 @@ private fun SliderRow(
  * A text setting. Opens a dialog with a text field when tapped.
  */
 @Composable
-private fun TextRow(
-    title: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    summary: String = "",
-    keyboardType: KeyboardType = KeyboardType.Text,
-) {
+private fun TextFieldRowContent(def: TextFieldDef, prefs: SharedPreferences) {
     var editing by remember { mutableStateOf(false) }
-    var currentValue by remember(value) { mutableStateOf(value) }
+    val value = prefs.getString(def.prefKey, def.default) ?: def.default
 
     Column(
         modifier = Modifier
@@ -422,35 +1104,33 @@ private fun TextRow(
             .clickable { editing = true }
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
-        Text(text = title, style = MaterialTheme.typography.bodyLarge)
+        Text(text = def.title, style = MaterialTheme.typography.bodyLarge)
         Text(
-            text = if (summary.isNotEmpty()) summary else currentValue.ifEmpty { "(not set)" },
+            text = if (def.summary.isNotEmpty()) def.summary else value.ifEmpty { "(not set)" },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 
     if (editing) {
-        var text by remember { mutableStateOf(currentValue) }
+        var text by remember(value) { mutableStateOf(value) }
         AlertDialog(
             onDismissRequest = { editing = false },
-            title = { Text(text = title) },
+            shape = SettingsDialogShape,
+            title = { Text(text = def.title, style = MaterialTheme.typography.headlineSmall) },
             text = {
                 OutlinedTextField(
                     value = text,
                     onValueChange = { text = it },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+                    keyboardOptions = KeyboardOptions(keyboardType = def.keyboardType),
                 )
             },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        currentValue = text
-                        onValueChange(text)
-                        editing = false
-                    },
-                ) { Text(text = "OK") }
+                TextButton(onClick = {
+                    prefs.edit { putString(def.prefKey, text) }
+                    editing = false
+                }) { Text(text = "OK") }
             },
             dismissButton = {
                 TextButton(onClick = { editing = false }) { Text(text = "Cancel") }
@@ -460,110 +1140,83 @@ private fun TextRow(
 }
 
 /**
- * A setting with a fixed set of options. Opens a dialog with radio buttons when tapped.
+ * A clickable row that performs an action, optionally behind a confirmation
+ * dialog.
  */
 @Composable
-private fun DropdownRow(
-    title: String,
-    options: List<Pair<String, String>>,
-    value: String,
-    onValueChange: (String) -> Unit,
-    summarySuffix: String = "",
-) {
-    var open by remember { mutableStateOf(false) }
-    var currentValue by remember(value) { mutableStateOf(value) }
+private fun ActionRowContent(def: ActionDef) {
+    var pendingConfirm by remember { mutableStateOf(false) }
 
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { open = true }
+            .clickable {
+                if (def.confirm != null) {
+                    pendingConfirm = true
+                } else {
+                    def.onClick()
+                }
+            }
             .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = title, style = MaterialTheme.typography.bodyLarge)
-        val label = options.firstOrNull { it.first == currentValue }?.second ?: currentValue
-        Text(
-            text = label + summarySuffix,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = def.title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (def.destructive) {
+                    MaterialTheme.colorScheme.error
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
+            )
+            if (def.summary.isNotEmpty()) {
+                Text(
+                    text = def.summary,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        if (def.navigates) {
+            MaterialSymbolIcon(
+                icon = MaterialSymbolsIcons.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 
-    if (open) {
-        AlertDialog(
-            onDismissRequest = { open = false },
-            title = { Text(text = title) },
-            text = {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    options.forEach { (label, optionValue) ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { currentValue = optionValue; onValueChange(optionValue); open = false }
-                                .padding(vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            RadioButton(
-                                selected = optionValue == currentValue,
-                                onClick = { currentValue = optionValue; onValueChange(optionValue); open = false },
-                            )
-                            Text(text = label)
-                        }
-                    }
-                }
+    if (pendingConfirm && def.confirm != null) {
+        SettingsAlertDialog(
+            title = def.confirm.title,
+            text = def.confirm.text,
+            html = def.confirm.html,
+            icon = def.confirm.icon,
+            confirmLabel = def.confirm.confirmLabel,
+            dismissLabel = def.confirm.dismissLabel,
+            destructive = def.confirm.destructive,
+            onConfirm = {
+                pendingConfirm = false
+                def.onConfirmed()
             },
-            confirmButton = {},
-            dismissButton = {
-                TextButton(onClick = { open = false }) { Text(text = "Cancel") }
-            },
+            onDismiss = { pendingConfirm = false },
         )
     }
 }
 
 /**
  * A non-clickable row that shows a block of (HTML) info text, like the legacy
- * InfoPreference.
+ * InfoPreference, rendered as a tonal callout banner.
  */
 @Composable
-private fun InfoNoticeRow(
-    title: String,
-    html: String,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-    ) {
-        if (title.isNotEmpty()) {
-            Text(text = title, style = MaterialTheme.typography.bodyLarge)
-        }
-        HtmlNoticeText(html = html)
-    }
-}
-
-/**
- * A clickable row that performs an action, like a plain legacy Preference.
- */
-@Composable
-private fun ActionRow(
-    title: String,
-    summary: String = "",
-    onClick: () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-    ) {
-        Text(text = title, style = MaterialTheme.typography.bodyLarge)
-        if (summary.isNotEmpty()) {
-            Text(
-                text = summary,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
+private fun InfoRowContent(def: InfoDef) {
+    HtmlNoticeBanner(
+        html = def.html,
+        title = def.title,
+        icon = def.icon,
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+    )
 }
 
 /**
@@ -571,15 +1224,10 @@ private fun ActionRow(
  * empty. -1 means "not constrained". A port of the legacy NumberRangePreference.
  */
 @Composable
-private fun NumberRangeRow(
-    title: String,
-    key: String,
-    prefs: SharedPreferences,
-    minKey: String = "${key}_min",
-) {
+private fun NumberRangeRowContent(def: NumberRangeDef, prefs: SharedPreferences) {
     var editing by remember { mutableStateOf(false) }
-    val min = prefs.getInt(minKey, -1)
-    val max = prefs.getInt("${key}_max", -1)
+    val min = prefs.getInt(def.minKey, -1)
+    val max = prefs.getInt("${def.prefKey}_max", -1)
     val summary = when {
         min == -1 && max == -1 -> "Unlimited"
         min == -1 -> "Max $max"
@@ -593,7 +1241,7 @@ private fun NumberRangeRow(
             .clickable { editing = true }
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
-        Text(text = title, style = MaterialTheme.typography.bodyLarge)
+        Text(text = def.title, style = MaterialTheme.typography.bodyLarge)
         Text(
             text = summary,
             style = MaterialTheme.typography.bodySmall,
@@ -606,7 +1254,8 @@ private fun NumberRangeRow(
         var maxText by remember { mutableStateOf(if (max == -1) "" else max.toString()) }
         AlertDialog(
             onDismissRequest = { editing = false },
-            title = { Text(text = title) },
+            shape = SettingsDialogShape,
+            title = { Text(text = def.title, style = MaterialTheme.typography.headlineSmall) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
@@ -643,16 +1292,14 @@ private fun NumberRangeRow(
                     // Empty means unconstrained; unparseable input keeps the
                     // old value, like the legacy safe() wrapper does.
                     if (minText.isEmpty()) {
-                        prefs.edit { putInt(minKey, -1) }
-                    }
-                    else {
-                        minText.toIntOrNull()?.let { prefs.edit { putInt(minKey, it) } }
+                        prefs.edit { putInt(def.minKey, -1) }
+                    } else {
+                        minText.toIntOrNull()?.let { prefs.edit { putInt(def.minKey, it) } }
                     }
                     if (maxText.isEmpty()) {
-                        prefs.edit { putInt("${key}_max", -1) }
-                    }
-                    else {
-                        maxText.toIntOrNull()?.let { prefs.edit { putInt("${key}_max", it) } }
+                        prefs.edit { putInt("${def.prefKey}_max", -1) }
+                    } else {
+                        maxText.toIntOrNull()?.let { prefs.edit { putInt("${def.prefKey}_max", it) } }
                     }
                     editing = false
                 }) { Text(text = "OK") }
@@ -669,16 +1316,10 @@ private fun NumberRangeRow(
  * query. A port of the legacy TaggedUrlPreference.
  */
 @Composable
-private fun SearchEngineRow(
-    title: String,
-    key: String,
-    prefs: SharedPreferences,
-    defaultUrl: String = "",
-    defaultTag: String = "",
-) {
+private fun SearchEngineRowContent(def: SearchEngineDef, prefs: SharedPreferences) {
     var editing by remember { mutableStateOf(false) }
-    val tag = prefs.getString("${key}_tag", defaultTag) ?: defaultTag
-    val url = prefs.getString(key, defaultUrl) ?: defaultUrl
+    val tag = prefs.getString("${def.prefKey}_tag", def.defaultTag) ?: def.defaultTag
+    val url = prefs.getString(def.prefKey, def.defaultUrl) ?: def.defaultUrl
 
     Column(
         modifier = Modifier
@@ -686,9 +1327,9 @@ private fun SearchEngineRow(
             .clickable { editing = true }
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
-        Text(text = title, style = MaterialTheme.typography.bodyLarge)
+        Text(text = def.title, style = MaterialTheme.typography.bodyLarge)
         Text(
-            text = tag,
+            text = tag.ifEmpty { "(not set)" },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -699,7 +1340,8 @@ private fun SearchEngineRow(
         var urlText by remember { mutableStateOf(url) }
         AlertDialog(
             onDismissRequest = { editing = false },
-            title = { Text(text = title) },
+            shape = SettingsDialogShape,
+            title = { Text(text = def.title, style = MaterialTheme.typography.headlineSmall) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
@@ -725,8 +1367,8 @@ private fun SearchEngineRow(
             confirmButton = {
                 TextButton(onClick = {
                     prefs.edit {
-                        putString("${key}_tag", tagText)
-                        putString(key, urlText)
+                        putString("${def.prefKey}_tag", tagText)
+                        putString(def.prefKey, urlText)
                     }
                     editing = false
                 }) { Text(text = "OK") }
@@ -739,65 +1381,155 @@ private fun SearchEngineRow(
 }
 
 //
-// Category screens.
+// Declarative category screens.
 //
 
 /**
- * API and audio download settings.
+ * A detail screen for one declaratively rendered category.
  */
 @Composable
-private fun ApiSettings() {
-    val prefs = prefs()
+private fun DefCategoryScreen(
+    categoryId: String,
+    highlight: String?,
+    onBack: () -> Unit,
+    onOpenCategory: (String, String?) -> Unit,
+    onGoHome: () -> Unit,
+) {
+    val context = LocalContext.current
     val apiState by LiveApiState.getInstance().observeAsState(initial = ApiState.UNKNOWN)
 
-    if (apiState != ApiState.OK) {
-        InfoNoticeRow(title = "Caution", html = Constants.API_KEY_PERMISSION_NOTICE)
+    val groups = categoryDefs(
+        categoryId = categoryId,
+        context = context,
+        onOpenCategory = onOpenCategory,
+        onGoHome = onGoHome,
+        apiStateOk = { apiState == ApiState.OK },
+    )
+
+    Scaffold(
+        topBar = {
+            SettingsTopBar(title = categoryTitle(categoryId), onBack = onBack)
+        },
+    ) { padding ->
+        SettingGroups(
+            groups = groups,
+            highlight = highlight,
+            modifier = Modifier.padding(padding),
+        )
     }
-    TextRow(
-        title = "V2 API token",
-        value = GlobalSettings.Api.getApiKey() ?: "",
-        onValueChange = { GlobalSettings.Api.setApiKey(it) },
-    )
-    DropdownRow(
-        title = "Network access rule",
-        options = listOf(
-            Pair("Always allow sync and downloads", "ALWAYS"),
-            Pair("Always allow sync, downloads only on unmetered connections (WiFi)", "DOWNLOAD_WIFI_ONLY"),
-            Pair("Allow sync and downloads only on unmetered connections (WiFi)", "WIFI_ONLY"),
+}
+
+//
+// Category definitions.
+//
+
+/**
+ * Login to WaniKani: API token, account extras and sync behavior.
+ */
+private fun apiSettingsGroups(apiStateOk: () -> Boolean): List<SettingGroup> {
+    val showPermissionNotice: (SharedPreferences) -> Boolean = { !apiStateOk() }
+    return listOf(
+        SettingGroup(
+            null,
+            listOf(
+                InfoDef(
+                    key = "api_permission_notice",
+                    title = "Caution",
+                    html = Constants.API_KEY_PERMISSION_NOTICE,
+                    icon = MaterialSymbolsIcons.Warning,
+                    visibleIf = showPermissionNotice,
+                ),
+            ),
         ),
-        value = prefs.getString("network_rule", "DOWNLOAD_WIFI_ONLY") ?: "DOWNLOAD_WIFI_ONLY",
-        onValueChange = { setPrefString(it, "network_rule", prefs) },
-    )
-    DropdownRow(
-        title = "Audio files location",
-        options = remember { audioLocationOptions() },
-        value = prefs.getString("audio_location", "Internal") ?: "Internal",
-        onValueChange = { setPrefString(it, "audio_location", prefs) },
-    )
-    SwitchRow(
-        title = "Auto-download audio for upcoming reviews",
-        checked = prefs.getBoolean("auto_download_audio", true),
-        onCheckedChange = { setPrefBoolean(it, "auto_download_audio", prefs) },
-    )
-    SwitchRow(
-        title = "Allow background sync",
-        summary = "Caution - this may drain your battery faster than normal",
-        checked = prefs.getBoolean("enable_background_sync", false),
-        onCheckedChange = { setPrefBoolean(it, "enable_background_sync", prefs) },
-    )
-    SwitchRow(
-        title = "Sync when the app is opened",
-        summary = "Triggers sync if the app has been closed for at least 3 min",
-        checked = prefs.getBoolean("sync_on_open", false),
-        onCheckedChange = { setPrefBoolean(it, "sync_on_open", prefs) },
-    )
-    TextRow(
-        title = "Web site password",
-        value = prefs.getString("web_password", "") ?: "",
-        summary = "This is only needed for resurrect functionality. Leave blank if you don't need it.",
-        onValueChange = { setPrefString(it, "web_password", prefs) },
+        group(
+            "WaniKani account",
+            TextFieldDef(
+                key = "api_key", title = "V2 API token",
+                prefKey = "api_key",
+            ),
+            TextFieldDef(
+                key = "web_password", title = "Web site password",
+                summary = "This is only needed for resurrect functionality. Leave blank if you don't need it.",
+                prefKey = "web_password",
+            ),
+        ),
+        group(
+            "Sync",
+            SelectDef(
+                key = "network_rule", title = "Network access rule",
+                options = NETWORK_RULE_OPTIONS,
+                prefKey = "network_rule", default = "DOWNLOAD_WIFI_ONLY",
+            ),
+            SwitchDef(
+                key = "enable_background_sync", title = "Allow background sync",
+                summary = "Caution - this may drain your battery faster than normal",
+                prefKey = "enable_background_sync",
+            ),
+            SwitchDef(
+                key = "sync_on_open", title = "Sync when the app is opened",
+                summary = "Triggers sync if the app has been closed for at least 3 min",
+                prefKey = "sync_on_open",
+            ),
+        ),
     )
 }
+
+/**
+ * Audio: playback behavior and audio file storage.
+ */
+private fun audioSettingsGroups(onOpenCategory: (String, String?) -> Unit): List<SettingGroup> = listOf(
+    group(
+        "Playback",
+        SwitchDef(
+            key = "autoplay_lesson_presentation",
+            title = "Autoplay audio during lesson presentation",
+            prefKey = "autoplay_lesson_presentation",
+        ),
+        SwitchDef(
+            key = "autoplay_lessons", title = "Autoplay audio during lessons",
+            summary = "When answering a question correctly in a lesson session",
+            prefKey = "autoplay_lessons",
+        ),
+        SwitchDef(
+            key = "autoplay_reviews", title = "Autoplay audio during reviews",
+            summary = "When answering a question correctly in a review/self-study session",
+            prefKey = "autoplay_reviews",
+        ),
+        SwitchDef(
+            key = "autoplay_anki_reveal", title = "Autoplay audio when revealing in Anki mode",
+            summary = "When clicking the 'Show answer' button in Anki mode",
+            prefKey = "autoplay_anki_reveal",
+        ),
+        SelectDef(
+            key = "voice_preference", title = "Voice preference",
+            options = VOICE_OPTIONS,
+            prefKey = "voice_preference", default = "RANDOM",
+        ),
+        SwitchDef(
+            key = "use_audio_focus", title = "Request audio focus when playing vocab audio",
+            summary = "Asks other player apps to pause or lower their volume when playing vocab audio",
+            prefKey = "use_audio_focus",
+        ),
+    ),
+    group(
+        "Audio files",
+        SelectDef(
+            key = "audio_location", title = "Audio files location",
+            options = audioLocationOptions(),
+            prefKey = "audio_location", default = "Internal",
+        ),
+        SwitchDef(
+            key = "auto_download_audio", title = "Auto-download audio for upcoming reviews",
+            prefKey = "auto_download_audio",
+        ),
+        ActionDef(
+            key = "download_audio_action", title = "Download audio files",
+            summary = "Download audio for offline use, per level",
+            navigates = true,
+            onClick = { onOpenCategory("download_audio", null) },
+        ),
+    ),
+)
 
 /**
  * The available audio storage locations: internal storage plus the external
@@ -810,1244 +1542,1131 @@ private fun audioLocationOptions(): List<Pair<String, String>> {
 }
 
 /**
- * Display settings.
+ * Display: themes and quiz screen appearance.
  */
-@Composable
-private fun DisplaySettings(onOpenThemeCustomization: () -> Unit) {
-    val prefs = prefs()
-
-    DropdownRow(
-        title = "Light Theme",
-        options = THEME_OPTIONS,
-        value = prefs.getString("theme", "LIGHT") ?: "LIGHT",
-        onValueChange = { setPrefString(it, "theme", prefs) },
-        summarySuffix = " theme is currently selected",
-    )
-    DropdownRow(
-        title = "Dark Theme",
-        options = THEME_OPTIONS,
-        value = prefs.getString("nightTheme", "DARK") ?: "DARK",
-        onValueChange = { setPrefString(it, "nightTheme", prefs) },
-        summarySuffix = " is used in system wide dark mode",
-    )
-    ActionRow(
-        title = "Theme Customisation",
-        summary = "Customise colors in the current theme",
-        onClick = onOpenThemeCustomization,
-    )
-    SwitchRow(
-        title = "Center caret in quiz answer box",
-        checked = prefs.getBoolean("center_caret", false),
-        onCheckedChange = { setPrefBoolean(it, "center_caret", prefs) },
-    )
-    SliderRow(
-        title = "Vertical size of the Anki mode buttons",
-        value = prefs.getInt("anki_buttons_height", 50),
-        valueRange = 10f..250f,
-        onValueChange = { setPrefInt(it, "anki_buttons_height", prefs) },
-    )
-    SliderRow(
-        title = "Fix height of main quiz question view",
-        value = prefs.getInt("quiz_question_view_height", 0),
-        valueRange = 0f..500f,
-        onValueChange = { setPrefInt(it, "quiz_question_view_height", prefs) },
-        summary = "Set to 0 to not force a fixed size",
-    )
-    SwitchRow(
-        title = "Swap the correct/incorrect Anki mode buttons",
-        checked = prefs.getBoolean("swap_anki_buttons", false),
-        onCheckedChange = { setPrefBoolean(it, "swap_anki_buttons", prefs) },
-    )
-    SwitchRow(
-        title = "Use slide animations to transition between quiz questions",
-        checked = prefs.getBoolean("slide_animations", true),
-        onCheckedChange = { setPrefBoolean(it, "slide_animations", prefs) },
-    )
-    SwitchRow(
-        title = "Stretch the question view to fill the screen when keyboard input is active",
-        checked = prefs.getBoolean("stretch_quiz_question_view", false),
-        onCheckedChange = { setPrefBoolean(it, "stretch_quiz_question_view", prefs) },
-    )
-}
+private fun displaySettingsGroups(onOpenCategory: (String, String?) -> Unit): List<SettingGroup> = listOf(
+    group(
+        "Themes",
+        SelectDef(
+            key = "theme", title = "Light theme",
+            options = THEME_OPTIONS,
+            prefKey = "theme", default = "LIGHT",
+            summarySuffix = " theme is currently selected",
+        ),
+        SelectDef(
+            key = "nightTheme", title = "Dark theme",
+            options = THEME_OPTIONS,
+            prefKey = "nightTheme", default = "DARK",
+            summarySuffix = " is used in system wide dark mode",
+        ),
+        ActionDef(
+            key = "theme_customization", title = "Theme customisation",
+            summary = "Customise colors in the current theme",
+            navigates = true,
+            onClick = { onOpenCategory("theme_customization", null) },
+        ),
+    ),
+    group(
+        "Quiz screen",
+        SwitchDef(
+            key = "center_caret", title = "Center caret in quiz answer box",
+            prefKey = "center_caret",
+        ),
+        SliderDef(
+            key = "anki_buttons_height", title = "Vertical size of the Anki mode buttons",
+            range = 10f..250f,
+            read = { it.getInt("anki_buttons_height", 50) },
+            write = { v, p -> setPrefInt(v, "anki_buttons_height", p) },
+        ),
+        SliderDef(
+            key = "quiz_question_view_height", title = "Fix height of main quiz question view",
+            range = 0f..500f,
+            summary = "Set to 0 to not force a fixed size",
+            read = { it.getInt("quiz_question_view_height", 0) },
+            write = { v, p -> setPrefInt(v, "quiz_question_view_height", p) },
+            valueText = { if (it == 0) "Auto" else "$it" },
+        ),
+        SwitchDef(
+            key = "swap_anki_buttons", title = "Swap the correct/incorrect Anki mode buttons",
+            prefKey = "swap_anki_buttons",
+        ),
+        SwitchDef(
+            key = "slide_animations",
+            title = "Use slide animations to transition between quiz questions",
+            prefKey = "slide_animations", default = true,
+        ),
+        SwitchDef(
+            key = "stretch_quiz_question_view",
+            title = "Stretch the question view to fill the screen when keyboard input is active",
+            prefKey = "stretch_quiz_question_view",
+        ),
+    ),
+)
 
 /**
- * Dashboard settings.
+ * Dashboard: what to show on the dashboard.
  */
-@Composable
-private fun DashboardSettings() {
-    val prefs = prefs()
-
-    SwitchRow(
-        title = "Show lesson/review breakdown",
-        checked = prefs.getBoolean("show_lesson_review_breakdown", false),
-        onCheckedChange = { setPrefBoolean(it, "show_lesson_review_breakdown", prefs) },
-    )
-    SwitchRow(
-        title = "Show 24h review timeline",
-        checked = prefs.getBoolean("show_timeline", true),
-        onCheckedChange = { setPrefBoolean(it, "show_timeline", prefs) },
-    )
-    DropdownRow(
-        title = "Timeline chart style",
-        options = listOf(
-            Pair("SRS Stage", "SRS_STAGE"),
-            Pair("Next SRS Stage", "NEXT_SRS_STAGE"),
-            Pair("Item type", "ITEM_TYPE"),
+private fun dashboardSettingsGroups(): List<SettingGroup> = listOf(
+    group(
+        "Overview",
+        SwitchDef(
+            key = "show_lesson_review_breakdown", title = "Show lesson/review breakdown",
+            prefKey = "show_lesson_review_breakdown",
         ),
-        value = prefs.getString("timeline_chart_style", "SRS_STAGE") ?: "SRS_STAGE",
-        onValueChange = { setPrefString(it, "timeline_chart_style", prefs) },
-    )
-    SwitchRow(
-        title = "Show timeline waterfall line",
-        summary = "Show cumulative amount of reviews over time in the timeline chart",
-        checked = prefs.getBoolean("show_waterfall_line", false),
-        onCheckedChange = { setPrefBoolean(it, "show_waterfall_line", prefs) },
-    )
-    DropdownRow(
-        title = "Timeline chart Y-axis grid style",
-        options = listOf(
-            Pair("Off", "OFF"),
-            Pair("Scaled for bars", "FOR_BARS"),
-            Pair("Scaled for cumulative review count", "FOR_WATERFALL"),
+    ),
+    group(
+        "Review timeline",
+        SwitchDef(
+            key = "show_timeline", title = "Show 24h review timeline",
+            prefKey = "show_timeline", default = true,
         ),
-        value = prefs.getString("timeline_chart_grid_style", "FOR_BARS") ?: "FOR_BARS",
-        onValueChange = { setPrefString(it, "timeline_chart_grid_style", prefs) },
-    )
-    DropdownRow(
-        title = "Timeline chart size",
-        options = CHART_SIZE_OPTIONS,
-        value = prefs.getString("timeline_chart_size", "24") ?: "24",
-        onValueChange = { setPrefString(it, "timeline_chart_size", prefs) },
-    )
-    DropdownRow(
-        title = "Part of timeline chart shown at once",
-        options = CHART_SIZE_OPTIONS,
-        value = prefs.getString("timeline_chart_size_shown", "24") ?: "24",
-        onValueChange = { setPrefString(it, "timeline_chart_size_shown", prefs) },
-    )
-    SwitchRow(
-        title = "Show SRS breakdown",
-        checked = prefs.getBoolean("show_srs_breakdown", true),
-        onCheckedChange = { setPrefBoolean(it, "show_srs_breakdown", prefs) },
-    )
-    SwitchRow(
-        title = "Show level progression bars",
-        checked = prefs.getBoolean("show_level_progression", true),
-        onCheckedChange = { setPrefBoolean(it, "show_level_progression", prefs) },
-    )
-    SwitchRow(
-        title = "Show level progression bars for levels higher than your own",
-        summary = "This can happen if you unlocked subjects in the past that have since been moved above your level.",
-        checked = prefs.getBoolean("show_over_level_progression", false),
-        onCheckedChange = { setPrefBoolean(it, "show_over_level_progression", prefs) },
-    )
-    val limitPreviousLevels = prefs.getBoolean("previous_level_progression_limit", false)
-    SwitchRow(
-        title = "Limit progression bars for the completed levels to only the most recent levels",
-        summary = "This can help if many new items were added to previous levels and you now have all those levels on your dashboard.",
-        checked = limitPreviousLevels,
-        onCheckedChange = { setPrefBoolean(it, "previous_level_progression_limit", prefs) },
-    )
-    if (limitPreviousLevels) {
-        SliderRow(
+        SelectDef(
+            key = "timeline_chart_style", title = "Timeline chart style",
+            options = listOf(
+                Pair("SRS Stage", "SRS_STAGE"),
+                Pair("Next SRS Stage", "NEXT_SRS_STAGE"),
+                Pair("Item type", "ITEM_TYPE"),
+            ),
+            prefKey = "timeline_chart_style", default = "SRS_STAGE",
+        ),
+        SwitchDef(
+            key = "show_waterfall_line", title = "Show timeline waterfall line",
+            summary = "Show cumulative amount of reviews over time in the timeline chart",
+            prefKey = "show_waterfall_line",
+        ),
+        SelectDef(
+            key = "timeline_chart_grid_style", title = "Timeline chart Y-axis grid style",
+            options = listOf(
+                Pair("Off", "OFF"),
+                Pair("Scaled for bars", "FOR_BARS"),
+                Pair("Scaled for cumulative review count", "FOR_WATERFALL"),
+            ),
+            prefKey = "timeline_chart_grid_style", default = "FOR_BARS",
+        ),
+        SelectDef(
+            key = "timeline_chart_size", title = "Timeline chart size",
+            options = CHART_SIZE_OPTIONS,
+            prefKey = "timeline_chart_size", default = "24",
+        ),
+        SelectDef(
+            key = "timeline_chart_size_shown", title = "Part of timeline chart shown at once",
+            options = CHART_SIZE_OPTIONS,
+            prefKey = "timeline_chart_size_shown", default = "24",
+        ),
+    ),
+    group(
+        "SRS and level progression",
+        SwitchDef(
+            key = "show_srs_breakdown", title = "Show SRS breakdown",
+            prefKey = "show_srs_breakdown", default = true,
+        ),
+        SwitchDef(
+            key = "show_level_progression", title = "Show level progression bars",
+            prefKey = "show_level_progression", default = true,
+        ),
+        SwitchDef(
+            key = "show_over_level_progression",
+            title = "Show level progression bars for levels higher than your own",
+            summary = "This can happen if you unlocked subjects in the past that have since been moved above your level.",
+            prefKey = "show_over_level_progression",
+        ),
+        SwitchDef(
+            key = "previous_level_progression_limit",
+            title = "Limit progression bars for the completed levels to only the most recent levels",
+            summary = "This can help if many new items were added to previous levels and you now have all those levels on your dashboard.",
+            prefKey = "previous_level_progression_limit",
+        ),
+        SliderDef(
+            key = "previous_level_progression_limit_amount",
             title = "Number of previous levels to show progression bars for",
-            value = prefs.getString("previous_level_progression_limit_amount", "1")?.toIntOrNull() ?: 1,
-            valueRange = 0f..60f,
-            onValueChange = { setPrefString(it.toString(), "previous_level_progression_limit_amount", prefs) },
-        )
-    }
-    SwitchRow(
-        title = "Show post-60 progression bar",
-        summary = "Can be used at any level, but intended for level 60! Does NOT include a legend, " +
-            "so only enable this if you're cool with that.",
-        checked = prefs.getBoolean("show_post60_progression", false),
-        onCheckedChange = { setPrefBoolean(it, "show_post60_progression", prefs) },
-    )
-    SwitchRow(
-        title = "Show subsections in post-60 progression bar",
-        summary = "Show separate bar segments for the different Apprentice and Guru levels",
-        checked = prefs.getBoolean("show_post60_subsections", false),
-        onCheckedChange = { setPrefBoolean(it, "show_post60_subsections", prefs) },
-    )
-    SwitchRow(
-        title = "Reverse post-60 progression bar",
-        checked = prefs.getBoolean("show_post60_reverse", false),
-        onCheckedChange = { setPrefBoolean(it, "show_post60_reverse", prefs) },
-    )
-    SwitchRow(
-        title = "Show Jōyō progress",
-        checked = prefs.getBoolean("show_joyo_progress", false),
-        onCheckedChange = { setPrefBoolean(it, "show_joyo_progress", prefs) },
-    )
-    SwitchRow(
-        title = "Show JLPT progress",
-        checked = prefs.getBoolean("show_jlpt_progress", false),
-        onCheckedChange = { setPrefBoolean(it, "show_jlpt_progress", prefs) },
-    )
-    SwitchRow(
-        title = "Show recently unlocked items",
-        checked = prefs.getBoolean("show_recent_unlocks", true),
-        onCheckedChange = { setPrefBoolean(it, "show_recent_unlocks", prefs) },
-    )
-    SwitchRow(
-        title = "Show critical condition items",
-        checked = prefs.getBoolean("show_critical_condition", true),
-        onCheckedChange = { setPrefBoolean(it, "show_critical_condition", prefs) },
-    )
-    SwitchRow(
-        title = "Show recently burned items",
-        checked = prefs.getBoolean("show_burned_items", true),
-        onCheckedChange = { setPrefBoolean(it, "show_burned_items", prefs) },
-    )
-}
-
-/**
- * Subject info settings.
- */
-@Composable
-private fun SubjectInfoSettings() {
-    val prefs = prefs()
-
-    SwitchRow(
-        title = "Hide readings in lessons until tapped",
-        checked = prefs.getBoolean("hide_lesson_readings", false),
-        onCheckedChange = { setPrefBoolean(it, "hide_lesson_readings", prefs) },
-    )
-    SwitchRow(
-        title = "Hide context sentence translations until tapped",
-        checked = prefs.getBoolean("hide_sentence_translations", true),
-        onCheckedChange = { setPrefBoolean(it, "hide_sentence_translations", prefs) },
-    )
-    SwitchRow(
-        title = "Show pitch information on vocabulary",
-        checked = prefs.getBoolean("show_pitch_info", false),
-        onCheckedChange = { setPrefBoolean(it, "show_pitch_info", prefs) },
-    )
-    SwitchRow(
-        title = "Swap 'visually similar' and 'used in' in subject info dump",
-        checked = prefs.getBoolean("swap_similar_amalgamations", false),
-        onCheckedChange = { setPrefBoolean(it, "swap_similar_amalgamations", prefs) },
-    )
-    SwitchRow(
-        title = "Highlight subject tags in mnemonic texts with colours",
-        summary = "This replaces tags such as <kanji> with appropriate colouring instead of just making the text bold",
-        checked = prefs.getBoolean("highlight_subject_tags", true),
-        onCheckedChange = { setPrefBoolean(it, "highlight_subject_tags", prefs) },
-    )
-    val alwaysHideWkMnemonic = prefs.getBoolean("always_hide_wk_mnemonic", false)
-    SwitchRow(
-        title = "Always hide WaniKani's own mnemonics",
-        checked = alwaysHideWkMnemonic,
-        onCheckedChange = { setPrefBoolean(it, "always_hide_wk_mnemonic", prefs) },
-    )
-    if (!alwaysHideWkMnemonic) {
-        SwitchRow(
-            title = "Hide WaniKani's meaning mnemonic if a user note is present",
-            checked = prefs.getBoolean("hide_meaning_mnemonic", false),
-            onCheckedChange = { setPrefBoolean(it, "hide_meaning_mnemonic", prefs) },
-        )
-        SwitchRow(
-            title = "Hide WaniKani's reading mnemonic if a user note is present",
-            checked = prefs.getBoolean("hide_reading_mnemonic", false),
-            onCheckedChange = { setPrefBoolean(it, "hide_reading_mnemonic", prefs) },
-        )
-    }
-    SwitchRow(
-        title = "Show old names and mnemonics for radicals from before the December 2018 content update",
-        checked = prefs.getBoolean("show_legacy", false),
-        onCheckedChange = { setPrefBoolean(it, "show_legacy", prefs) },
-    )
-    DropdownRow(
-        title = "Show info dump after a correct meaning answer",
-        options = INFO_DUMP_OPTIONS,
-        value = prefs.getString("meaning_info_dump", "ANSWERS_ONLY") ?: "ANSWERS_ONLY",
-        onValueChange = { setPrefString(it, "meaning_info_dump", prefs) },
-    )
-    DropdownRow(
-        title = "Show info dump after a correct reading answer",
-        options = INFO_DUMP_OPTIONS,
-        value = prefs.getString("reading_info_dump", "ANSWERS_ONLY") ?: "ANSWERS_ONLY",
-        onValueChange = { setPrefString(it, "reading_info_dump", prefs) },
-    )
-    DropdownRow(
-        title = "Show info dump after an incorrect meaning answer",
-        options = INFO_DUMP_OPTIONS,
-        value = prefs.getString("meaning_info_dump_incorrect", "ANSWERS_ONLY") ?: "ANSWERS_ONLY",
-        onValueChange = { setPrefString(it, "meaning_info_dump_incorrect", prefs) },
-    )
-    DropdownRow(
-        title = "Show info dump after an incorrect reading answer",
-        options = INFO_DUMP_OPTIONS,
-        value = prefs.getString("reading_info_dump_incorrect", "ANSWERS_ONLY") ?: "ANSWERS_ONLY",
-        onValueChange = { setPrefString(it, "reading_info_dump_incorrect", prefs) },
-    )
-    SwitchRow(
-        title = "Show stroke order diagrams on radicals and kanji",
-        checked = prefs.getBoolean("show_stroke_order", false),
-        onCheckedChange = { setPrefBoolean(it, "show_stroke_order", prefs) },
-    )
-    SwitchRow(
-        title = "Animate the stroke order diagrams",
-        summary = "Tap the diagram to toggle animation",
-        checked = prefs.getBoolean("stroke_order_animated", true),
-        onCheckedChange = { setPrefBoolean(it, "stroke_order_animated", prefs) },
-    )
-    SliderRow(
-        title = "Size of the stroke order diagrams",
-        value = prefs.getInt("stroke_order_size", 250),
-        valueRange = 20f..500f,
-        onValueChange = { setPrefInt(it, "stroke_order_size", prefs) },
-    )
-}
-
-/**
- * Audio settings.
- */
-@Composable
-private fun AudioSettings() {
-    val prefs = prefs()
-
-    SwitchRow(
-        title = "Autoplay audio during lesson presentation",
-        checked = prefs.getBoolean("autoplay_lesson_presentation", true),
-        onCheckedChange = { setPrefBoolean(it, "autoplay_lesson_presentation", prefs) },
-    )
-    SwitchRow(
-        title = "Autoplay audio during lessons",
-        summary = "When answering a question correctly in a lesson session",
-        checked = prefs.getBoolean("autoplay_lessons", true),
-        onCheckedChange = { setPrefBoolean(it, "autoplay_lessons", prefs) },
-    )
-    SwitchRow(
-        title = "Autoplay audio during reviews",
-        summary = "When answering a question correctly in a review/self-study session",
-        checked = prefs.getBoolean("autoplay_reviews", true),
-        onCheckedChange = { setPrefBoolean(it, "autoplay_reviews", prefs) },
-    )
-    SwitchRow(
-        title = "Autoplay audio when revealing in Anki mode",
-        summary = "When clicking the 'Show answer' button in Anki mode",
-        checked = prefs.getBoolean("autoplay_anki_reveal", true),
-        onCheckedChange = { setPrefBoolean(it, "autoplay_anki_reveal", prefs) },
-    )
-    DropdownRow(
-        title = "Voice preference",
-        options = listOf(
-            Pair("Random", "RANDOM"),
-            Pair("Masculine", "MALE"),
-            Pair("Femminine", "FEMALE"),
-            Pair("Alternate between voices", "ALTERNATE"),
+            range = 0f..60f,
+            read = { it.getString("previous_level_progression_limit_amount", "1")?.toIntOrNull() ?: 1 },
+            write = { v, p -> setPrefString(v.toString(), "previous_level_progression_limit_amount", p) },
+            valueText = { if (it == 0) "All" else "$it" },
+            visibleIf = { it.getBoolean("previous_level_progression_limit", false) },
         ),
-        value = prefs.getString("voice_preference", "RANDOM") ?: "RANDOM",
-        onValueChange = { setPrefString(it, "voice_preference", prefs) },
-    )
-    SwitchRow(
-        title = "Request audio focus when playing vocab audio",
-        summary = "Asks other player apps to pause or lower their volume when playing vocab audio",
-        checked = prefs.getBoolean("use_audio_focus", true),
-        onCheckedChange = { setPrefBoolean(it, "use_audio_focus", prefs) },
-    )
-}
-
-/**
- * Lesson/review settings.
- */
-@Composable
-private fun LessonReviewSettings() {
-    val prefs = prefs()
-
-    TextRow(
-        title = "Max. # of lessons per session",
-        value = prefs.getString("max_lesson_session_size", "5") ?: "5",
-        onValueChange = { setPrefString(it, "max_lesson_session_size", prefs) },
-        keyboardType = KeyboardType.Number,
-    )
-    TextRow(
-        title = "Max. # of reviews per session",
-        value = prefs.getString("max_review_session_size", "100") ?: "100",
-        onValueChange = { setPrefString(it, "max_review_session_size", prefs) },
-        keyboardType = KeyboardType.Number,
-    )
-    TextRow(
-        title = "Max. # of self-study items per session",
-        value = prefs.getString("max_self_study_session_size", "100") ?: "100",
-        onValueChange = { setPrefString(it, "max_self_study_session_size", prefs) },
-        keyboardType = KeyboardType.Number,
-    )
-    SwitchRow(
-        title = "Delay processing quiz results",
-        summary = "Doesn't process results until the session is finished. Allows unlimited undo during sessions.",
-        checked = prefs.getBoolean("delay_result_upload", false),
-        onCheckedChange = { setPrefBoolean(it, "delay_result_upload", prefs) },
-    )
-    SwitchRow(
-        title = "Enable lightning mode",
-        summary = "Auto-advance to next question on a correct answer",
-        checked = prefs.getBoolean("enable_lightning_mode", true),
-        onCheckedChange = { setPrefBoolean(it, "enable_lightning_mode", prefs) },
-    )
-    SwitchRow(
-        title = "Enable a check mark / X animation for a correct / incorrect answer",
-        checked = prefs.getBoolean("show_answer_toast", true),
-        onCheckedChange = { setPrefBoolean(it, "show_answer_toast", prefs) },
-    )
-    SwitchRow(
-        title = "Enable SRS indicator",
-        summary = "Show current SRS stage during reviews",
-        checked = prefs.getBoolean("enable_srs_indicator", false),
-        onCheckedChange = { setPrefBoolean(it, "enable_srs_indicator", prefs) },
-    )
-    SwitchRow(
-        title = "Enable SRS up/downgrade toast",
-        summary = "Show a brief notification when an item goes up or down in SRS stage during reviews",
-        checked = prefs.getBoolean("enable_srs_toast", true),
-        onCheckedChange = { setPrefBoolean(it, "enable_srs_toast", prefs) },
-    )
-    SwitchRow(
-        title = "Enable alternative readings/meanings toast",
-        summary = "Show a toast with alternative readings or meanings upon correct answer",
-        checked = prefs.getBoolean("enable_alternatives_toast", false),
-        onCheckedChange = { setPrefBoolean(it, "enable_alternatives_toast", prefs) },
-    )
-    SwitchRow(
-        title = "Enable haptic feedback on correct answer",
-        summary = "The device will give a short buzz to indicate a correct answer",
-        checked = prefs.getBoolean("enable_haptic_feedback_success", false),
-        onCheckedChange = { setPrefBoolean(it, "enable_haptic_feedback_success", prefs) },
-    )
-    SwitchRow(
-        title = "Enable haptic feedback on incorrect answer",
-        summary = "The device will give a long buzz to indicate an incorrect answer",
-        checked = prefs.getBoolean("enable_haptic_feedback_failure", false),
-        onCheckedChange = { setPrefBoolean(it, "enable_haptic_feedback_failure", prefs) },
-    )
-    DropdownRow(
-        title = "Action for \"close enough\" answer",
-        options = listOf(
-            Pair("Accept silently", "SILENTLY_ACCEPT"),
-            Pair("Accept and show a toast", "ACCEPT_WITH_TOAST"),
-            Pair("Accept, show a toast, disable lightning mode for this question", "ACCEPT_WITH_TOAST_NO_LM"),
-            Pair("Shake and retry", "SHAKE_AND_RETRY"),
-            Pair("Reject", "REJECT"),
+        SwitchDef(
+            key = "show_post60_progression", title = "Show post-60 progression bar",
+            summary = "Can be used at any level, but intended for level 60! Does NOT include a legend, " +
+                "so only enable this if you're cool with that.",
+            prefKey = "show_post60_progression",
         ),
-        value = prefs.getString("close_enough_action", "SILENTLY_ACCEPT") ?: "SILENTLY_ACCEPT",
-        onValueChange = { setPrefString(it, "close_enough_action", prefs) },
+        SwitchDef(
+            key = "show_post60_subsections", title = "Show subsections in post-60 progression bar",
+            summary = "Show separate bar segments for the different Apprentice and Guru levels",
+            prefKey = "show_post60_subsections",
+            visibleIf = { it.getBoolean("show_post60_progression", false) },
+        ),
+        SwitchDef(
+            key = "show_post60_reverse", title = "Reverse post-60 progression bar",
+            prefKey = "show_post60_reverse",
+            visibleIf = { it.getBoolean("show_post60_progression", false) },
+        ),
+    ),
+    group(
+        "Subject tables",
+        SwitchDef(
+            key = "show_joyo_progress", title = "Show Jōyō progress",
+            prefKey = "show_joyo_progress",
+        ),
+        SwitchDef(
+            key = "show_jlpt_progress", title = "Show JLPT progress",
+            prefKey = "show_jlpt_progress",
+        ),
+        SwitchDef(
+            key = "show_recent_unlocks", title = "Show recently unlocked items",
+            prefKey = "show_recent_unlocks", default = true,
+        ),
+        SwitchDef(
+            key = "show_critical_condition", title = "Show critical condition items",
+            prefKey = "show_critical_condition", default = true,
+        ),
+        SwitchDef(
+            key = "show_burned_items", title = "Show recently burned items",
+            prefKey = "show_burned_items", default = true,
+        ),
+    ),
+)
+
+/**
+ * Lessons and reviews: session size, question behavior, feedback, and the
+ * advanced sub-settings, which live here instead of in a separate top-level
+ * category.
+ */
+private fun lessonReviewSettingsGroups(onOpenCategory: (String, String?) -> Unit): List<SettingGroup> {
+    val advancedEnabled: (SharedPreferences) -> Boolean = { it.getBoolean("enable_advanced", false) }
+    return listOf(
+        group(
+            "Session size",
+            TextFieldDef(
+                key = "max_lesson_session_size", title = "Max. # of lessons per session",
+                prefKey = "max_lesson_session_size", default = "5",
+                keyboardType = KeyboardType.Number,
+            ),
+            TextFieldDef(
+                key = "max_review_session_size", title = "Max. # of reviews per session",
+                prefKey = "max_review_session_size", default = "100",
+                keyboardType = KeyboardType.Number,
+            ),
+            TextFieldDef(
+                key = "max_self_study_session_size", title = "Max. # of self-study items per session",
+                prefKey = "max_self_study_session_size", default = "100",
+                keyboardType = KeyboardType.Number,
+            ),
+        ),
+        group(
+            "Questions",
+            SwitchDef(
+                key = "enable_lightning_mode", title = "Enable lightning mode",
+                summary = "Auto-advance to next question on a correct answer",
+                prefKey = "enable_lightning_mode", default = true,
+            ),
+            SwitchDef(
+                key = "delay_result_upload", title = "Delay processing quiz results",
+                summary = "Doesn't process results until the session is finished. Allows unlimited undo during sessions.",
+                prefKey = "delay_result_upload",
+            ),
+            SwitchDef(
+                key = "show_answer_toast",
+                title = "Enable a check mark / X animation for a correct / incorrect answer",
+                prefKey = "show_answer_toast", default = true,
+            ),
+            SwitchDef(
+                key = "require_onyomi_in_katakana", title = "Require on'yomi answers in Katakana",
+                prefKey = "require_onyomi_in_katakana",
+            ),
+            SelectDef(
+                key = "close_enough_action", title = "Action for \"close enough\" answer",
+                options = CLOSE_ENOUGH_OPTIONS,
+                prefKey = "close_enough_action", default = "SILENTLY_ACCEPT",
+            ),
+        ),
+        group(
+            "Feedback",
+            SwitchDef(
+                key = "enable_srs_indicator", title = "Enable SRS indicator",
+                summary = "Show current SRS stage during reviews",
+                prefKey = "enable_srs_indicator",
+            ),
+            SwitchDef(
+                key = "enable_srs_toast", title = "Enable SRS up/downgrade toast",
+                summary = "Show a brief notification when an item goes up or down in SRS stage during reviews",
+                prefKey = "enable_srs_toast", default = true,
+            ),
+            SwitchDef(
+                key = "enable_alternatives_toast", title = "Enable alternative readings/meanings toast",
+                summary = "Show a toast with alternative readings or meanings upon correct answer",
+                prefKey = "enable_alternatives_toast",
+            ),
+            SwitchDef(
+                key = "enable_haptic_feedback_success", title = "Enable haptic feedback on correct answer",
+                summary = "The device will give a short buzz to indicate a correct answer",
+                prefKey = "enable_haptic_feedback_success",
+            ),
+            SwitchDef(
+                key = "enable_haptic_feedback_failure", title = "Enable haptic feedback on incorrect answer",
+                summary = "The device will give a long buzz to indicate an incorrect answer",
+                prefKey = "enable_haptic_feedback_failure",
+            ),
+        ),
+        group(
+            "Advanced",
+            SwitchDef(
+                key = "enable_advanced", title = "Enable advanced settings",
+                summary = "Only for experienced users!",
+                prefKey = "enable_advanced",
+                confirmTitle = "Enable advanced settings?",
+                confirmHtml = Constants.ENABLE_ADVANCED_WARNING,
+            ),
+            ActionDef(
+                key = "advanced_lesson_settings", title = "Lesson advanced settings",
+                summary = "Ordering, Anki mode and subject selection for lessons",
+                navigates = true,
+                onClick = { onOpenCategory("advanced_lesson_settings", null) },
+                visibleIf = advancedEnabled,
+            ),
+            ActionDef(
+                key = "advanced_review_settings", title = "Review advanced settings",
+                summary = "Ordering, Anki mode and subject selection for reviews",
+                navigates = true,
+                onClick = { onOpenCategory("advanced_review_settings", null) },
+                visibleIf = advancedEnabled,
+            ),
+            ActionDef(
+                key = "advanced_self_study_settings", title = "Self-study advanced settings",
+                summary = "Ordering, Anki mode and subject selection for self-study",
+                navigates = true,
+                onClick = { onOpenCategory("advanced_self_study_settings", null) },
+                visibleIf = advancedEnabled,
+            ),
+            ActionDef(
+                key = "advanced_other_settings", title = "Other advanced settings",
+                summary = "Buttons, overdue threshold and session log",
+                navigates = true,
+                onClick = { onOpenCategory("advanced_other_settings", null) },
+                visibleIf = advancedEnabled,
+            ),
+        ),
     )
 }
 
 /**
- * Keyboard input settings.
+ * Subject info: mnemonics, subject details, info dump and stroke order.
  */
-@Composable
-private fun KeyboardSettings(onOpenHelp: () -> Unit) {
-    val prefs = prefs()
-
-    ActionRow(
-        title = "Tap here to read some hints for keyboard settings",
-        onClick = onOpenHelp,
-    )
-    SwitchRow(
-        title = "Allow keyboard auto-correct for meanings",
-        checked = prefs.getBoolean("enable_auto_correct_meaning", false),
-        onCheckedChange = { setPrefBoolean(it, "enable_auto_correct_meaning", prefs) },
-    )
-    SwitchRow(
-        title = "Allow keyboard auto-correct for readings",
-        checked = prefs.getBoolean("enable_auto_correct_reading", false),
-        onCheckedChange = { setPrefBoolean(it, "enable_auto_correct_reading", prefs) },
-    )
-    SwitchRow(
-        title = "Force ASCII keyboard for meanings",
-        checked = prefs.getBoolean("force_ascii_meaning", true),
-        onCheckedChange = { setPrefBoolean(it, "force_ascii_meaning", prefs) },
-    )
-    SwitchRow(
-        title = "Force ASCII keyboard for readings",
-        checked = prefs.getBoolean("force_ascii_reading", false),
-        onCheckedChange = { setPrefBoolean(it, "force_ascii_reading", prefs) },
-    )
-    SwitchRow(
-        title = "Force 'visible password' setting for meanings",
-        summary = "This may be necessary to prevent auto-suggest on some keyboards",
-        checked = prefs.getBoolean("force_visible_password_meaning", false),
-        onCheckedChange = { setPrefBoolean(it, "force_visible_password_meaning", prefs) },
-    )
-    SwitchRow(
-        title = "Force 'visible password' setting for readings",
-        summary = "This may be necessary to prevent auto-suggest on some keyboards",
-        checked = prefs.getBoolean("force_visible_password_reading", false),
-        onCheckedChange = { setPrefBoolean(it, "force_visible_password_reading", prefs) },
-    )
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-        SwitchRow(
-            title = "Set keyboard language hint to English for meanings",
-            summary = "Enable this to suggest a keyboard language for meaning questions",
-            checked = prefs.getBoolean("ime_hint_meaning", false),
-            onCheckedChange = { setPrefBoolean(it, "ime_hint_meaning", prefs) },
-        )
-        SwitchRow(
-            title = "Set keyboard language hint to Japanese for readings",
-            summary = "Enable this to suggest a keyboard language for reading questions",
-            checked = prefs.getBoolean("ime_hint_reading", false),
-            onCheckedChange = { setPrefBoolean(it, "ime_hint_reading", prefs) },
-        )
+private fun subjectInfoSettingsGroups(): List<SettingGroup> {
+    val wkMnemonicsVisible: (SharedPreferences) -> Boolean = {
+        !it.getBoolean("always_hide_wk_mnemonic", false)
     }
-    SwitchRow(
-        title = "Enable 'no personalized learning' option",
-        summary = "Disable this to get rid of the annoying incognito icon in Swiftkey",
-        checked = prefs.getBoolean("enable_no_learning", true),
-        onCheckedChange = { setPrefBoolean(it, "enable_no_learning", prefs) },
-    )
-    TextRow(
-        title = "Delay in seconds to disable the next/submit button after typing an incorrect answer",
-        value = prefs.getString("next_button_delay", "0") ?: "0",
-        onValueChange = { setPrefString(it, "next_button_delay", prefs) },
-        keyboardType = KeyboardType.Decimal,
+    val strokeOrderVisible: (SharedPreferences) -> Boolean = {
+        it.getBoolean("show_stroke_order", false)
+    }
+    return listOf(
+        group(
+            "Lessons",
+            SwitchDef(
+                key = "hide_lesson_readings", title = "Hide readings in lessons until tapped",
+                prefKey = "hide_lesson_readings",
+            ),
+        ),
+        group(
+            "Mnemonics",
+            SwitchDef(
+                key = "highlight_subject_tags",
+                title = "Highlight subject tags in mnemonic texts with colours",
+                summary = "This replaces tags such as <kanji> with appropriate colouring instead of just making the text bold",
+                prefKey = "highlight_subject_tags", default = true,
+            ),
+            SwitchDef(
+                key = "always_hide_wk_mnemonic", title = "Always hide WaniKani's own mnemonics",
+                prefKey = "always_hide_wk_mnemonic",
+            ),
+            SwitchDef(
+                key = "hide_meaning_mnemonic",
+                title = "Hide WaniKani's meaning mnemonic if a user note is present",
+                prefKey = "hide_meaning_mnemonic",
+                visibleIf = wkMnemonicsVisible,
+            ),
+            SwitchDef(
+                key = "hide_reading_mnemonic",
+                title = "Hide WaniKani's reading mnemonic if a user note is present",
+                prefKey = "hide_reading_mnemonic",
+                visibleIf = wkMnemonicsVisible,
+            ),
+            SwitchDef(
+                key = "show_legacy",
+                title = "Show old names and mnemonics for radicals from before the December 2018 content update",
+                prefKey = "show_legacy",
+            ),
+        ),
+        group(
+            "Subject details",
+            SwitchDef(
+                key = "hide_sentence_translations",
+                title = "Hide context sentence translations until tapped",
+                prefKey = "hide_sentence_translations", default = true,
+            ),
+            SwitchDef(
+                key = "show_pitch_info", title = "Show pitch information on vocabulary",
+                prefKey = "show_pitch_info",
+            ),
+            SwitchDef(
+                key = "swap_similar_amalgamations",
+                title = "Swap 'visually similar' and 'used in' in subject info dump",
+                prefKey = "swap_similar_amalgamations",
+            ),
+            SwitchDef(
+                key = "show_onyomi_in_katakana", title = "Show on'yomi readings in Katakana",
+                prefKey = "show_onyomi_in_katakana",
+            ),
+        ),
+        group(
+            "Info dump",
+            SelectDef(
+                key = "meaning_info_dump", title = "Show info dump after a correct meaning answer",
+                options = INFO_DUMP_OPTIONS,
+                prefKey = "meaning_info_dump", default = "ANSWERS_ONLY",
+            ),
+            SelectDef(
+                key = "reading_info_dump", title = "Show info dump after a correct reading answer",
+                options = INFO_DUMP_OPTIONS,
+                prefKey = "reading_info_dump", default = "ANSWERS_ONLY",
+            ),
+            SelectDef(
+                key = "meaning_info_dump_incorrect",
+                title = "Show info dump after an incorrect meaning answer",
+                options = INFO_DUMP_OPTIONS,
+                prefKey = "meaning_info_dump_incorrect", default = "ANSWERS_ONLY",
+            ),
+            SelectDef(
+                key = "reading_info_dump_incorrect",
+                title = "Show info dump after an incorrect reading answer",
+                options = INFO_DUMP_OPTIONS,
+                prefKey = "reading_info_dump_incorrect", default = "ANSWERS_ONLY",
+            ),
+        ),
+        group(
+            "Stroke order",
+            SwitchDef(
+                key = "show_stroke_order", title = "Show stroke order diagrams on radicals and kanji",
+                prefKey = "show_stroke_order",
+            ),
+            SwitchDef(
+                key = "stroke_order_animated", title = "Animate the stroke order diagrams",
+                summary = "Tap the diagram to toggle animation",
+                prefKey = "stroke_order_animated", default = true,
+                visibleIf = strokeOrderVisible,
+            ),
+            SliderDef(
+                key = "stroke_order_size", title = "Size of the stroke order diagrams",
+                range = 20f..500f,
+                read = { it.getInt("stroke_order_size", 250) },
+                write = { v, p -> setPrefInt(v, "stroke_order_size", p) },
+                visibleIf = strokeOrderVisible,
+            ),
+        ),
     )
 }
 
 /**
- * Font settings.
+ * Keyboard input: auto-correct, keyboard layout and answer buttons.
  */
-@Composable
-private fun FontSettings(onOpenCategory: (String) -> Unit) {
-    val prefs = prefs()
-
-    ActionRow(
-        title = "Select fonts for quiz questions",
-        onClick = { onOpenCategory("font_selection") },
-    )
-    ActionRow(
-        title = "Import fonts for quiz questions",
-        onClick = { onOpenCategory("font_import") },
-    )
-    SliderRow(
-        title = "Max font size of subject title in lesson presentation",
-        value = prefs.getInt("max_font_size_lesson", 128),
-        valueRange = 0f..128f,
-        onValueChange = { setPrefInt(it, "max_font_size_lesson", prefs) },
-        summary = "Set to 0 to hide the title",
-    )
-    SliderRow(
-        title = "Max font size of subject title on the quiz screen",
-        value = prefs.getInt("max_font_size_quiz", 28),
-        valueRange = 0f..128f,
-        onValueChange = { setPrefInt(it, "max_font_size_quiz", prefs) },
-        summary = "Set to 0 to hide the title",
-    )
-    SliderRow(
-        title = "Max font size of subject title on the browse screen",
-        value = prefs.getInt("max_font_size_browse", 64),
-        valueRange = 0f..128f,
-        onValueChange = { setPrefInt(it, "max_font_size_browse", prefs) },
-        summary = "Set to 0 to hide the title",
-    )
-    SliderRow(
-        title = "Max font size of main quiz question text",
-        value = prefs.getInt("max_font_size_quiz_text", 100),
-        valueRange = 0f..500f,
-        onValueChange = { setPrefInt(it, "max_font_size_quiz_text", prefs) },
-        summary = "This is the large question text in the center of the quiz screen",
-    )
-    SliderRow(
-        title = "Font size of answer input text box",
-        value = prefs.getInt("font_size_question_edit", 14),
-        valueRange = 10f..32f,
-        onValueChange = { setPrefInt(it, "font_size_question_edit", prefs) },
-    )
-    SliderRow(
-        title = "Font size of subject info dump",
-        value = prefs.getInt("font_size_subject_info", 14),
-        valueRange = 10f..32f,
-        onValueChange = { setPrefInt(it, "font_size_subject_info", prefs) },
-    )
-    SliderRow(
-        title = "Font size of dashboard subject tables",
-        value = prefs.getInt("font_size_live_subject_table", 14),
-        valueRange = 10f..32f,
-        onValueChange = { setPrefInt(it, "font_size_live_subject_table", prefs) },
-        summary = "Critical condition items, recent unlocks, and recently burned",
-    )
-    SliderRow(
-        title = "Font size of Anki mode answers",
-        value = prefs.getInt("font_size_anki_answer", 18),
-        valueRange = 10f..48f,
-        onValueChange = { setPrefInt(it, "font_size_anki_answer", prefs) },
+private fun keyboardSettingsGroups(onOpenCategory: (String, String?) -> Unit): List<SettingGroup> {
+    val api26Plus: (SharedPreferences) -> Boolean = {
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
+    }
+    return listOf(
+        SettingGroup(
+            null,
+            listOf(
+                ActionDef(
+                    key = "keyboard_help", title = "Keyboard help",
+                    summary = "Tap here to read some hints for keyboard settings",
+                    navigates = true,
+                    onClick = { onOpenCategory("keyboard_help", null) },
+                ),
+            ),
+        ),
+        group(
+            "Auto-correct and suggestions",
+            SwitchDef(
+                key = "enable_auto_correct_meaning", title = "Allow keyboard auto-correct for meanings",
+                prefKey = "enable_auto_correct_meaning",
+            ),
+            SwitchDef(
+                key = "enable_auto_correct_reading", title = "Allow keyboard auto-correct for readings",
+                prefKey = "enable_auto_correct_reading",
+            ),
+            SwitchDef(
+                key = "force_visible_password_meaning",
+                title = "Force 'visible password' setting for meanings",
+                summary = "This may be necessary to prevent auto-suggest on some keyboards",
+                prefKey = "force_visible_password_meaning",
+            ),
+            SwitchDef(
+                key = "force_visible_password_reading",
+                title = "Force 'visible password' setting for readings",
+                summary = "This may be necessary to prevent auto-suggest on some keyboards",
+                prefKey = "force_visible_password_reading",
+            ),
+            SwitchDef(
+                key = "enable_no_learning", title = "Enable 'no personalized learning' option",
+                summary = "Disable this to get rid of the annoying incognito icon in Swiftkey",
+                prefKey = "enable_no_learning", default = true,
+            ),
+        ),
+        group(
+            "Keyboard layout",
+            SwitchDef(
+                key = "force_ascii_meaning", title = "Force ASCII keyboard for meanings",
+                prefKey = "force_ascii_meaning", default = true,
+            ),
+            SwitchDef(
+                key = "force_ascii_reading", title = "Force ASCII keyboard for readings",
+                prefKey = "force_ascii_reading",
+            ),
+            SwitchDef(
+                key = "ime_hint_meaning",
+                title = "Set keyboard language hint to English for meanings",
+                summary = "Enable this to suggest a keyboard language for meaning questions",
+                prefKey = "ime_hint_meaning",
+                visibleIf = api26Plus,
+            ),
+            SwitchDef(
+                key = "ime_hint_reading",
+                title = "Set keyboard language hint to Japanese for readings",
+                summary = "Enable this to suggest a keyboard language for reading questions",
+                prefKey = "ime_hint_reading",
+                visibleIf = api26Plus,
+            ),
+        ),
+        group(
+            "Answer buttons",
+            TextFieldDef(
+                key = "next_button_delay",
+                title = "Delay in seconds to disable the next/submit button after typing an incorrect answer",
+                prefKey = "next_button_delay", default = "0",
+                keyboardType = KeyboardType.Decimal,
+            ),
+        ),
     )
 }
 
 /**
- * Other settings: search engines, notifications and miscellaneous.
+ * Fonts: font selection and text sizes, nested into sub-groups.
  */
-@Composable
-private fun OtherSettings() {
-    val prefs = prefs()
-    val context = LocalContext.current
+private fun fontSettingsGroups(onOpenCategory: (String, String?) -> Unit): List<SettingGroup> = listOf(
+    group(
+        "Fonts for questions",
+        ActionDef(
+            key = "font_selection", title = "Select fonts for quiz questions",
+            summary = "Choose which fonts are used to render question text",
+            navigates = true,
+            onClick = { onOpenCategory("font_selection", null) },
+        ),
+        ActionDef(
+            key = "font_import", title = "Import fonts for quiz questions",
+            summary = "Add your own TTF font files",
+            navigates = true,
+            onClick = { onOpenCategory("font_import", null) },
+        ),
+    ),
+    group(
+        "Subject title size",
+        SliderDef(
+            key = "max_font_size_lesson",
+            title = "Max font size of subject title in lesson presentation",
+            range = 0f..128f,
+            summary = "Set to 0 to hide the title",
+            read = { it.getInt("max_font_size_lesson", 128) },
+            write = { v, p -> setPrefInt(v, "max_font_size_lesson", p) },
+            valueText = { if (it == 0) "Hidden" else "$it" },
+        ),
+        SliderDef(
+            key = "max_font_size_quiz",
+            title = "Max font size of subject title on the quiz screen",
+            range = 0f..128f,
+            summary = "Set to 0 to hide the title",
+            read = { it.getInt("max_font_size_quiz", 28) },
+            write = { v, p -> setPrefInt(v, "max_font_size_quiz", p) },
+            valueText = { if (it == 0) "Hidden" else "$it" },
+        ),
+        SliderDef(
+            key = "max_font_size_browse",
+            title = "Max font size of subject title on the browse screen",
+            range = 0f..128f,
+            summary = "Set to 0 to hide the title",
+            read = { it.getInt("max_font_size_browse", 64) },
+            write = { v, p -> setPrefInt(v, "max_font_size_browse", p) },
+            valueText = { if (it == 0) "Hidden" else "$it" },
+        ),
+    ),
+    group(
+        "Text size",
+        SliderDef(
+            key = "max_font_size_quiz_text",
+            title = "Max font size of main quiz question text",
+            range = 0f..500f,
+            summary = "This is the large question text in the center of the quiz screen",
+            read = { it.getInt("max_font_size_quiz_text", 100) },
+            write = { v, p -> setPrefInt(v, "max_font_size_quiz_text", p) },
+        ),
+        SliderDef(
+            key = "font_size_question_edit", title = "Font size of answer input text box",
+            range = 10f..32f,
+            read = { it.getInt("font_size_question_edit", 14) },
+            write = { v, p -> setPrefInt(v, "font_size_question_edit", p) },
+        ),
+        SliderDef(
+            key = "font_size_subject_info", title = "Font size of subject info dump",
+            range = 10f..32f,
+            read = { it.getInt("font_size_subject_info", 14) },
+            write = { v, p -> setPrefInt(v, "font_size_subject_info", p) },
+        ),
+        SliderDef(
+            key = "font_size_live_subject_table",
+            title = "Font size of dashboard subject tables",
+            range = 10f..32f,
+            summary = "Critical condition items, recent unlocks, and recently burned",
+            read = { it.getInt("font_size_live_subject_table", 14) },
+            write = { v, p -> setPrefInt(v, "font_size_live_subject_table", p) },
+        ),
+        SliderDef(
+            key = "font_size_anki_answer", title = "Font size of Anki mode answers",
+            range = 10f..48f,
+            read = { it.getInt("font_size_anki_answer", 18) },
+            write = { v, p -> setPrefInt(v, "font_size_anki_answer", p) },
+        ),
+    ),
+)
 
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+/**
+ * Notifications and more: notifications, search engines and misc.
+ */
+private fun otherSettingsGroups(context: Context): List<SettingGroup> {
+    val showPermissionAction = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
         ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
         PackageManager.PERMISSION_GRANTED
-    ) {
-        ActionRow(
-            title = "Grant notification permission",
-            summary = "Open system settings to allow this app to send notifications",
-            onClick = {
-                val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                context.startActivity(intent)
-            },
-        )
-    }
-
-    SwitchRow(
-        title = "Enable notifications for new reviews",
-        checked = prefs.getBoolean("enable_notifications", true),
-        onCheckedChange = { setPrefBoolean(it, "enable_notifications", prefs) },
-    )
-    DropdownRow(
-        title = "Notification update frequency",
-        options = listOf(
-            Pair("Only for new reviews", "ONLY_NEW_REVIEWS"),
-            Pair("Once per hour", "ONCE_PER_HOUR"),
-            Pair("Continuously", "CONTINUOUSLY"),
+    return listOf(
+        SettingGroup(
+            null,
+            listOf(
+                ActionDef(
+                    key = "notification_permission", title = "Grant notification permission",
+                    summary = "Open system settings to allow this app to send notifications",
+                    visibleIf = { showPermissionAction },
+                    onClick = {
+                        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                        intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                        context.startActivity(intent)
+                    },
+                ),
+            ),
         ),
-        value = prefs.getString("notification_update_frequency", "ONLY_NEW_REVIEWS") ?: "ONLY_NEW_REVIEWS",
-        onValueChange = { setPrefString(it, "notification_update_frequency", prefs) },
-    )
-    DropdownRow(
-        title = "Notification priority",
-        options = listOf(
-            Pair("Minimum", "MIN"),
-            Pair("Low", "LOW"),
-            Pair("Default", "DEFAULT"),
-            Pair("High", "HIGH"),
-            Pair("Maximum", "MAX"),
+        group(
+            "Notifications",
+            SwitchDef(
+                key = "enable_notifications", title = "Enable notifications for new reviews",
+                prefKey = "enable_notifications", default = true,
+            ),
+            SelectDef(
+                key = "notification_update_frequency", title = "Notification update frequency",
+                options = listOf(
+                    Pair("Only for new reviews", "ONLY_NEW_REVIEWS"),
+                    Pair("Once per hour", "ONCE_PER_HOUR"),
+                    Pair("Continuously", "CONTINUOUSLY"),
+                ),
+                prefKey = "notification_update_frequency", default = "ONLY_NEW_REVIEWS",
+            ),
+            SelectDef(
+                key = "notification_priority", title = "Notification priority",
+                options = listOf(
+                    Pair("Minimum", "MIN"),
+                    Pair("Low", "LOW"),
+                    Pair("Default", "DEFAULT"),
+                    Pair("High", "HIGH"),
+                    Pair("Maximum", "MAX"),
+                ),
+                prefKey = "notification_priority", default = "DEFAULT",
+            ),
+            SelectDef(
+                key = "notification_category", title = "Notification category",
+                options = listOf(
+                    Pair("Incoming call", "CALL"),
+                    Pair("Navigation", "NAVIGATION"),
+                    Pair("Incoming message", "MESSAGE"),
+                    Pair("Email", "EMAIL"),
+                    Pair("Calendar event", "EVENT"),
+                    Pair("Promotion / Ad", "PROMO"),
+                    Pair("Alarm", "ALARM"),
+                    Pair("Progress", "PROGRESS"),
+                    Pair("Social media", "SOCIAL"),
+                    Pair("Error", "ERROR"),
+                    Pair("Media transport", "TRANSPORT"),
+                    Pair("System", "SYSTEM"),
+                    Pair("Service", "SERVICE"),
+                    Pair("Reminder", "REMINDER"),
+                    Pair("Recommendation (default)", "RECOMMENDATION"),
+                    Pair("Status", "STATUS"),
+                ),
+                prefKey = "notification_category", default = "RECOMMENDATION",
+            ),
         ),
-        value = prefs.getString("notification_priority", "DEFAULT") ?: "DEFAULT",
-        onValueChange = { setPrefString(it, "notification_priority", prefs) },
-    )
-    DropdownRow(
-        title = "Notification category",
-        options = listOf(
-            Pair("Incoming call", "CALL"),
-            Pair("Navigation", "NAVIGATION"),
-            Pair("Incoming message", "MESSAGE"),
-            Pair("Email", "EMAIL"),
-            Pair("Calendar event", "EVENT"),
-            Pair("Promotion / Ad", "PROMO"),
-            Pair("Alarm", "ALARM"),
-            Pair("Progress", "PROGRESS"),
-            Pair("Social media", "SOCIAL"),
-            Pair("Error", "ERROR"),
-            Pair("Media transport", "TRANSPORT"),
-            Pair("System", "SYSTEM"),
-            Pair("Service", "SERVICE"),
-            Pair("Reminder", "REMINDER"),
-            Pair("Recommendation (default)", "RECOMMENDATION"),
-            Pair("Status", "STATUS"),
+        group(
+            "Search engines",
+            SearchEngineDef(
+                key = "search_engine_1", title = "Search engine 1",
+                prefKey = "search_engine_1",
+                defaultUrl = "https://ja.wiktionary.org/w/index.php?search=%s",
+                defaultTag = "Wiktionary",
+            ),
+            SearchEngineDef(
+                key = "search_engine_2", title = "Search engine 2",
+                prefKey = "search_engine_2",
+                defaultUrl = "https://jisho.org/search/%s",
+                defaultTag = "Jisho",
+            ),
+            SearchEngineDef(key = "search_engine_3", title = "Search engine 3", prefKey = "search_engine_3"),
+            SearchEngineDef(key = "search_engine_4", title = "Search engine 4", prefKey = "search_engine_4"),
+            SearchEngineDef(key = "search_engine_5", title = "Search engine 5", prefKey = "search_engine_5"),
         ),
-        value = prefs.getString("notification_category", "RECOMMENDATION") ?: "RECOMMENDATION",
-        onValueChange = { setPrefString(it, "notification_category", prefs) },
-    )
-    SearchEngineRow(
-        title = "Search engine 1",
-        key = "search_engine_1",
-        prefs = prefs,
-        defaultUrl = "https://ja.wiktionary.org/w/index.php?search=%s",
-        defaultTag = "Wiktionary",
-    )
-    SearchEngineRow(
-        title = "Search engine 2",
-        key = "search_engine_2",
-        prefs = prefs,
-        defaultUrl = "https://jisho.org/search/%s",
-        defaultTag = "Jisho",
-    )
-    SearchEngineRow(title = "Search engine 3", key = "search_engine_3", prefs = prefs)
-    SearchEngineRow(title = "Search engine 4", key = "search_engine_4", prefs = prefs)
-    SearchEngineRow(title = "Search engine 5", key = "search_engine_5", prefs = prefs)
-    SwitchRow(
-        title = "Enable star ratings for subjects",
-        summary = "If enabled you can give star ratings to subjects and use those ratings as search filters",
-        checked = prefs.getBoolean("enable_star_ratings", false),
-        onCheckedChange = { setPrefBoolean(it, "enable_star_ratings", prefs) },
-    )
-    SwitchRow(
-        title = "Show on'yomi readings in Katakana",
-        checked = prefs.getBoolean("show_onyomi_in_katakana", false),
-        onCheckedChange = { setPrefBoolean(it, "show_onyomi_in_katakana", prefs) },
-    )
-    SwitchRow(
-        title = "Require on'yomi answers in Katakana",
-        checked = prefs.getBoolean("require_onyomi_in_katakana", false),
-        onCheckedChange = { setPrefBoolean(it, "require_onyomi_in_katakana", prefs) },
+        group(
+            "Miscellaneous",
+            SwitchDef(
+                key = "enable_star_ratings", title = "Enable star ratings for subjects",
+                summary = "If enabled you can give star ratings to subjects and use those ratings as search filters",
+                prefKey = "enable_star_ratings",
+            ),
+        ),
     )
 }
 
 /**
  * Experimental (temporary) settings.
  */
-@Composable
-private fun ExperimentalSettings() {
-    val prefs = prefs()
-
-    InfoNoticeRow(title = "Caution", html = Constants.EXPERIMENTAL_PREFERENCE_STATUS_NOTICE)
-    DropdownRow(
-        title = "Subject card layout in search results",
-        options = SUBJECT_CARD_LAYOUT_OPTIONS,
-        value = prefs.getString("exp_subject_card_layout_search", "NORMAL") ?: "NORMAL",
-        onValueChange = { setPrefString(it, "exp_subject_card_layout_search", prefs) },
-    )
-    DropdownRow(
-        title = "Subject card layout in other places",
-        options = SUBJECT_CARD_LAYOUT_OPTIONS,
-        value = prefs.getString("exp_subject_card_layout_grid", "NORMAL") ?: "NORMAL",
-        onValueChange = { setPrefString(it, "exp_subject_card_layout_grid", prefs) },
-    )
-}
+private fun experimentalSettingsGroups(): List<SettingGroup> = listOf(
+    SettingGroup(
+        null,
+        listOf(
+            InfoDef(
+                key = "experimental_notice", title = "Caution",
+                html = Constants.EXPERIMENTAL_PREFERENCE_STATUS_NOTICE,
+                icon = MaterialSymbolsIcons.Science,
+            ),
+        ),
+    ),
+    group(
+        "Subject cards",
+        SelectDef(
+            key = "exp_subject_card_layout_search",
+            title = "Subject card layout in search results",
+            options = SUBJECT_CARD_LAYOUT_OPTIONS,
+            prefKey = "exp_subject_card_layout_search", default = "NORMAL",
+        ),
+        SelectDef(
+            key = "exp_subject_card_layout_grid",
+            title = "Subject card layout in other places",
+            options = SUBJECT_CARD_LAYOUT_OPTIONS,
+            prefKey = "exp_subject_card_layout_grid", default = "NORMAL",
+        ),
+    ),
+)
 
 /**
- * Other actions: data import/export and destructive reset actions.
+ * Maintenance: data import/export and destructive reset actions.
  */
-@Composable
-private fun OtherActionsSettings(
-    onOpenDataImportExport: () -> Unit,
-    onOpenDownloadAudio: () -> Unit,
+private fun otherActionsSettingsGroups(
+    context: Context,
+    onOpenCategory: (String, String?) -> Unit,
     onGoHome: () -> Unit,
-) {
-    val context = LocalContext.current
-    var resetTutorialsOpen by remember { mutableStateOf(false) }
-    var resetDatabaseOpen by remember { mutableStateOf(false) }
-    var flushTasksOpen by remember { mutableStateOf(false) }
-
-    ActionRow(
-        title = "Data import / export",
-        onClick = onOpenDataImportExport,
-    )
-    ActionRow(
-        title = "Download audio",
-        summary = "Download audio files for offline use",
-        onClick = onOpenDownloadAudio,
-    )
-    ActionRow(
-        title = "Flush background tasks",
-        summary = "Clear stuck background tasks",
-        onClick = { flushTasksOpen = true },
-    )
-    ActionRow(
-        title = "Reset UI confirmations and tutorials",
-        onClick = { resetTutorialsOpen = true },
-    )
-    ActionRow(
-        title = "Reset database",
-        summary = "Clear all data in the app",
-        onClick = { resetDatabaseOpen = true },
-    )
-
-    if (flushTasksOpen) {
-        AlertDialog(
-            onDismissRequest = { flushTasksOpen = false },
-            title = { Text(text = "Flush background tasks?") },
-            text = { Text(text = Constants.FLUSH_TASKS_WARNING.replace("<b>", "").replace("</b>", "")) },
-            confirmButton = {
-                TextButton(onClick = {
-                    flushTasksOpen = false
-                    JobRunnerService.schedule(FlushTasksJob::class.java, "")
-                    Toast.makeText(context, "Background tasks flushed!", Toast.LENGTH_LONG).show()
-                }) {
-                    Text(text = "Yes")
-                }
+): List<SettingGroup> = listOf(
+    group(
+        "Data",
+        ActionDef(
+            key = "data_import_export", title = "Data import / export",
+            summary = "Import or export search presets and star ratings",
+            navigates = true,
+            onClick = { onOpenCategory("data_import_export", null) },
+        ),
+    ),
+    group(
+        "Maintenance",
+        ActionDef(
+            key = "flush_tasks", title = "Flush background tasks",
+            summary = "Clear stuck background tasks",
+            confirm = ConfirmSpec(
+                title = "Flush background tasks?",
+                html = Constants.FLUSH_TASKS_WARNING,
+            ),
+            onConfirmed = {
+                JobRunnerService.schedule(FlushTasksJob::class.java, "")
+                Toast.makeText(context, "Background tasks flushed!", Toast.LENGTH_LONG).show()
             },
-            dismissButton = {
-                TextButton(onClick = { flushTasksOpen = false }) {
-                    Text(text = "No")
-                }
+        ),
+        ActionDef(
+            key = "reset_tutorials", title = "Reset UI confirmations and tutorials",
+            confirm = ConfirmSpec(
+                title = "Reset confirmations and tutorials?",
+                text = Constants.RESET_TUTORIALS_WARNING,
+            ),
+            onConfirmed = {
+                GlobalSettings.resetConfirmationsAndTutorials()
+                Toast.makeText(context, "Confirmations and tutorials reset", Toast.LENGTH_LONG).show()
             },
-        )
-    }
-
-    if (resetTutorialsOpen) {
-        AlertDialog(
-            onDismissRequest = { resetTutorialsOpen = false },
-            title = { Text(text = "Reset confirmations and tutorials?") },
-            text = { Text(text = Constants.RESET_TUTORIALS_WARNING) },
-            confirmButton = {
-                TextButton(onClick = {
-                    resetTutorialsOpen = false
-                    GlobalSettings.resetConfirmationsAndTutorials()
-                    Toast.makeText(context, "Confirmations and tutorials reset", Toast.LENGTH_LONG).show()
-                }) {
-                    Text(text = "Yes")
-                }
+        ),
+        ActionDef(
+            key = "reset_database", title = "Reset database",
+            summary = "Clear all data in the app",
+            confirm = ConfirmSpec(
+                title = "Reset database?",
+                html = Constants.RESET_DATABASE_WARNING,
+                destructive = true,
+            ),
+            onConfirmed = {
+                JobRunnerService.schedule(ResetDatabaseJob::class.java, "")
+                onGoHome()
             },
-            dismissButton = {
-                TextButton(onClick = { resetTutorialsOpen = false }) {
-                    Text(text = "No")
-                }
-            },
-        )
-    }
-
-    if (resetDatabaseOpen) {
-        AlertDialog(
-            onDismissRequest = { resetDatabaseOpen = false },
-            title = { Text(text = "Reset database?") },
-            text = { HtmlNoticeText(html = Constants.RESET_DATABASE_WARNING) },
-            confirmButton = {
-                TextButton(onClick = {
-                    resetDatabaseOpen = false
-                    JobRunnerService.schedule(ResetDatabaseJob::class.java, "")
-                    onGoHome()
-                }) {
-                    Text(text = "Yes")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { resetDatabaseOpen = false }) {
-                    Text(text = "No")
-                }
-            },
-        )
-    }
-}
-
-//
-// Advanced settings.
-//
+        ),
+    ),
+)
 
 /**
- * Advanced settings: a global unlock switch with a first-enable warning
- * dialog, and four sub-sections that are only visible when unlocked.
+ * Advanced lesson settings.
  */
-@Composable
-private fun AdvancedSettings(onBack: () -> Unit) {
-    var subCategory by remember { mutableStateOf<String?>(null) }
-
-    when (subCategory) {
-        "advanced_lesson_settings" -> AdvancedLessonSettings(onBack = { subCategory = null })
-        "advanced_review_settings" -> AdvancedReviewSettings(onBack = { subCategory = null })
-        "advanced_self_study_settings" -> AdvancedSelfStudySettings(onBack = { subCategory = null })
-        "advanced_other_settings" -> AdvancedOtherSettings(onBack = { subCategory = null })
-        else -> AdvancedMainScreen(onBack = onBack, onOpenSub = { subCategory = it })
-    }
-}
-
-/**
- * The main advanced settings screen: the unlock switch plus links to the
- * four advanced sub-sections.
- */
-@Composable
-private fun AdvancedMainScreen(
-    onBack: () -> Unit,
-    onOpenSub: (String) -> Unit,
-) {
-    var advancedEnabled by remember { mutableStateOf(GlobalSettings.getAdvancedEnabled()) }
-    var warningOpen by remember { mutableStateOf(false) }
-
-    Scaffold(
-        topBar = {
-            SettingsTopBar(title = "Advanced settings", onBack = onBack)
-        },
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState()),
-        ) {
-            SwitchRow(
-                title = "Enable advanced settings",
-                summary = "Only for experienced users!",
-                checked = advancedEnabled,
-                onCheckedChange = { enabled ->
-                    if (enabled && !advancedEnabled) {
-                        // First enable shows a confirmation dialog; the switch
-                        // only flips once the user confirms.
-                        warningOpen = true
-                    }
-                    else {
-                        advancedEnabled = enabled
-                        GlobalSettings.setAdvancedEnabled(enabled)
-                    }
-                },
-            )
-
-            if (advancedEnabled) {
-                ActionRow(title = "Lesson advanced settings", onClick = { onOpenSub("advanced_lesson_settings") })
-                ActionRow(title = "Review advanced settings", onClick = { onOpenSub("advanced_review_settings") })
-                ActionRow(title = "Self-study advanced settings", onClick = { onOpenSub("advanced_self_study_settings") })
-                ActionRow(title = "Other advanced settings", onClick = { onOpenSub("advanced_other_settings") })
-            }
-        }
-    }
-
-    if (warningOpen) {
-        AlertDialog(
-            onDismissRequest = { warningOpen = false },
-            title = { Text(text = "Enable advanced settings?") },
-            text = { HtmlNoticeText(html = Constants.ENABLE_ADVANCED_WARNING) },
-            confirmButton = {
-                TextButton(onClick = {
-                    warningOpen = false
-                    advancedEnabled = true
-                    GlobalSettings.setAdvancedEnabled(true)
-                }) {
-                    Text(text = "Yes")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    warningOpen = false
-                    advancedEnabled = false
-                    GlobalSettings.setAdvancedEnabled(false)
-                }) {
-                    Text(text = "No")
-                }
-            },
-        )
-    }
-}
-
-/**
- * A generic sub-screen of the advanced settings.
- */
-@Composable
-private fun AdvancedSubScreen(
-    title: String,
-    onBack: () -> Unit,
-    content: @Composable () -> Unit,
-) {
-    Scaffold(
-        topBar = {
-            SettingsTopBar(title = title, onBack = onBack)
-        },
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState()),
-        ) {
-            content()
-        }
-    }
-}
-
-/**
- * Lesson advanced settings.
- */
-@Composable
-private fun AdvancedLessonSettings(onBack: () -> Unit) {
-    val prefs = prefs()
-
-    AdvancedSubScreen(title = "Lesson advanced settings", onBack = onBack) {
-        DropdownRow(
-            title = "Order",
+private fun advancedLessonGroups(): List<SettingGroup> = listOf(
+    group(
+        "Ordering",
+        SelectDef(
+            key = "lesson_order", title = "Order",
             options = LESSON_ORDER_OPTIONS,
-            value = prefs.getString("lesson_order", "LEVEL_THEN_TYPE") ?: "LEVEL_THEN_TYPE",
-            onValueChange = { setPrefString(it, "lesson_order", prefs) },
-        )
-        SwitchRow(
-            title = "Reverse order",
-            checked = prefs.getBoolean("lesson_order_reversed", false),
-            onCheckedChange = { setPrefBoolean(it, "lesson_order_reversed", prefs) },
-        )
-        DropdownRow(
-            title = "Priority",
+            prefKey = "lesson_order", default = "LEVEL_THEN_TYPE",
+        ),
+        SwitchDef(
+            key = "lesson_order_reversed", title = "Reverse order",
+            prefKey = "lesson_order_reversed",
+        ),
+        SelectDef(
+            key = "lesson_order_priority", title = "Priority",
             options = SESSION_PRIORITY_OPTIONS,
-            value = prefs.getString("lesson_order_priority", "NONE") ?: "NONE",
-            onValueChange = { setPrefString(it, "lesson_order_priority", prefs) },
-        )
-        SwitchRow(
-            title = "Shuffle after selecting items",
+            prefKey = "lesson_order_priority", default = "NONE",
+        ),
+        SwitchDef(
+            key = "lesson_shuffle_after_selection", title = "Shuffle after selecting items",
             summary = "Items are selected for the session according to ordering settings, " +
                 "but after that they are shuffled randomly.",
-            checked = prefs.getBoolean("lesson_shuffle_after_selection", false),
-            onCheckedChange = { setPrefBoolean(it, "lesson_shuffle_after_selection", prefs) },
-        )
-        SwitchRow(
-            title = "Reading/meaning back-to-back",
-            checked = prefs.getBoolean("lesson_back_to_back", false),
-            onCheckedChange = { setPrefBoolean(it, "lesson_back_to_back", prefs) },
-        )
-        SwitchRow(
-            title = "Reading before meaning",
-            checked = prefs.getBoolean("lesson_reading_first", false),
-            onCheckedChange = { setPrefBoolean(it, "lesson_reading_first", prefs) },
-        )
-        SwitchRow(
-            title = "Meaning before reading",
-            checked = prefs.getBoolean("lesson_meaning_first", false),
-            onCheckedChange = { setPrefBoolean(it, "lesson_meaning_first", prefs) },
-        )
-        SwitchRow(
-            title = "Anki mode for meanings",
-            checked = prefs.getBoolean("anki_mode_lesson_meaning", false),
-            onCheckedChange = { setPrefBoolean(it, "anki_mode_lesson_meaning", prefs) },
-        )
-        SwitchRow(
-            title = "Anki mode for readings",
-            checked = prefs.getBoolean("anki_mode_lesson_reading", false),
-            onCheckedChange = { setPrefBoolean(it, "anki_mode_lesson_reading", prefs) },
-        )
-        InfoNoticeRow(title = "", html = Constants.SUBJECT_SELECTION_NOTICE)
-        SubjectRangeRows(prefix = "lesson_subjects", prefs = prefs)
-    }
-}
+            prefKey = "lesson_shuffle_after_selection",
+        ),
+    ),
+    group(
+        "Question order",
+        SwitchDef(
+            key = "lesson_back_to_back", title = "Reading/meaning back-to-back",
+            prefKey = "lesson_back_to_back",
+        ),
+        SwitchDef(
+            key = "lesson_reading_first", title = "Reading before meaning",
+            prefKey = "lesson_reading_first",
+        ),
+        SwitchDef(
+            key = "lesson_meaning_first", title = "Meaning before reading",
+            prefKey = "lesson_meaning_first",
+        ),
+    ),
+    group(
+        "Anki mode",
+        SwitchDef(
+            key = "anki_mode_lesson_meaning", title = "Anki mode for meanings",
+            prefKey = "anki_mode_lesson_meaning",
+        ),
+        SwitchDef(
+            key = "anki_mode_lesson_reading", title = "Anki mode for readings",
+            prefKey = "anki_mode_lesson_reading",
+        ),
+    ),
+    group(
+        "Subject selection",
+        InfoDef(title = "", html = Constants.SUBJECT_SELECTION_NOTICE),
+        NumberRangeDef(
+            key = "lesson_subjects_current", title = "Current-level items",
+            prefKey = "lesson_subjects_current", minKey = "lesson_subjects_current_min",
+        ),
+        NumberRangeDef(
+            key = "lesson_subjects_earlier", title = "Earlier-level items",
+            prefKey = "lesson_subjects_earlier", minKey = "lesson_subjects_earlier_min",
+        ),
+        NumberRangeDef(
+            key = "lesson_subjects_radical", title = "Radicals",
+            prefKey = "lesson_subjects_radical", minKey = "lesson_subjects_radical_min",
+        ),
+        NumberRangeDef(
+            key = "lesson_subjects_kanji", title = "Kanji",
+            prefKey = "lesson_subjects_kanji", minKey = "lesson_subjects_kanji_min",
+        ),
+        NumberRangeDef(
+            key = "lesson_subjects_vocabulary", title = "Vocabulary",
+            prefKey = "lesson_subjects_vocabulary", minKey = "lesson_subjects_vocabulary_min",
+        ),
+        // Legacy quirk: GlobalSettings reads the lesson kana-vocabulary min
+        // from a key with a capital K, so write that key.
+        NumberRangeDef(
+            key = "lesson_subjects_kana_vocabulary", title = "Kana Vocabulary",
+            prefKey = "lesson_subjects_kana_vocabulary",
+            minKey = "lesson_subjects_Kana_vocabulary_min",
+        ),
+    ),
+)
 
 /**
- * Review advanced settings.
+ * Advanced review settings.
  */
-@Composable
-private fun AdvancedReviewSettings(onBack: () -> Unit) {
-    val prefs = prefs()
-
-    AdvancedSubScreen(title = "Review advanced settings", onBack = onBack) {
-        DropdownRow(
-            title = "Order",
+private fun advancedReviewGroups(): List<SettingGroup> = listOf(
+    group(
+        "Ordering",
+        SelectDef(
+            key = "review_order", title = "Order",
             options = REVIEW_ORDER_OPTIONS,
-            value = prefs.getString("review_order", "SHUFFLE") ?: "SHUFFLE",
-            onValueChange = { setPrefString(it, "review_order", prefs) },
-        )
-        SwitchRow(
-            title = "Reverse order",
-            checked = prefs.getBoolean("review_order_reversed", false),
-            onCheckedChange = { setPrefBoolean(it, "review_order_reversed", prefs) },
-        )
-        SwitchRow(
-            title = "Overdue items first",
-            checked = prefs.getBoolean("review_order_overdue_first", false),
-            onCheckedChange = { setPrefBoolean(it, "review_order_overdue_first", prefs) },
-        )
-        DropdownRow(
-            title = "Priority",
+            prefKey = "review_order", default = "SHUFFLE",
+        ),
+        SwitchDef(
+            key = "review_order_reversed", title = "Reverse order",
+            prefKey = "review_order_reversed",
+        ),
+        SwitchDef(
+            key = "review_order_overdue_first", title = "Overdue items first",
+            prefKey = "review_order_overdue_first",
+        ),
+        SelectDef(
+            key = "review_order_priority", title = "Priority",
             options = SESSION_PRIORITY_OPTIONS,
-            value = prefs.getString("review_order_priority", "NONE") ?: "NONE",
-            onValueChange = { setPrefString(it, "review_order_priority", prefs) },
-        )
-        SwitchRow(
-            title = "Shuffle after selecting items",
+            prefKey = "review_order_priority", default = "NONE",
+        ),
+        SwitchDef(
+            key = "review_shuffle_after_selection", title = "Shuffle after selecting items",
             summary = "Items are selected for the session according to ordering settings, " +
                 "but after that they are shuffled randomly.",
-            checked = prefs.getBoolean("review_shuffle_after_selection", false),
-            onCheckedChange = { setPrefBoolean(it, "review_shuffle_after_selection", prefs) },
-        )
-        SwitchRow(
-            title = "Reading/meaning back-to-back",
-            checked = prefs.getBoolean("review_back_to_back", false),
-            onCheckedChange = { setPrefBoolean(it, "review_back_to_back", prefs) },
-        )
-        SwitchRow(
-            title = "Reading before meaning",
-            checked = prefs.getBoolean("review_reading_first", false),
-            onCheckedChange = { setPrefBoolean(it, "review_reading_first", prefs) },
-        )
-        SwitchRow(
-            title = "Meaning before reading",
-            checked = prefs.getBoolean("review_meaning_first", false),
-            onCheckedChange = { setPrefBoolean(it, "review_meaning_first", prefs) },
-        )
-        SwitchRow(
-            title = "Anki mode for meanings",
-            checked = prefs.getBoolean("anki_mode_review_meaning", false),
-            onCheckedChange = { setPrefBoolean(it, "anki_mode_review_meaning", prefs) },
-        )
-        SwitchRow(
-            title = "Anki mode for readings",
-            checked = prefs.getBoolean("anki_mode_review_reading", false),
-            onCheckedChange = { setPrefBoolean(it, "anki_mode_review_reading", prefs) },
-        )
-        SwitchRow(
-            title = "Randomise inflections in review",
+            prefKey = "review_shuffle_after_selection",
+        ),
+    ),
+    group(
+        "Question order",
+        SwitchDef(
+            key = "review_back_to_back", title = "Reading/meaning back-to-back",
+            prefKey = "review_back_to_back",
+        ),
+        SwitchDef(
+            key = "review_reading_first", title = "Reading before meaning",
+            prefKey = "review_reading_first",
+        ),
+        SwitchDef(
+            key = "review_meaning_first", title = "Meaning before reading",
+            prefKey = "review_meaning_first",
+        ),
+    ),
+    group(
+        "Anki mode",
+        SwitchDef(
+            key = "anki_mode_review_meaning", title = "Anki mode for meanings",
+            prefKey = "anki_mode_review_meaning",
+        ),
+        SwitchDef(
+            key = "anki_mode_review_reading", title = "Anki mode for readings",
+            prefKey = "anki_mode_review_reading",
+        ),
+        SwitchDef(
+            key = "review_randomize_inflections", title = "Randomise inflections in review",
             summary = "Works best with Anki mode. Random inflections will be added to adjectives and verbs. " +
                 "Note that answers and audio will use only dictionary forms.",
-            checked = prefs.getBoolean("review_randomize_inflections", false),
-            onCheckedChange = { setPrefBoolean(it, "review_randomize_inflections", prefs) },
-        )
-        InfoNoticeRow(title = "", html = Constants.SUBJECT_SELECTION_NOTICE)
-        SubjectRangeRows(prefix = "review_subjects", prefs = prefs)
-    }
-}
+            prefKey = "review_randomize_inflections",
+        ),
+    ),
+    group(
+        "Subject selection",
+        InfoDef(title = "", html = Constants.SUBJECT_SELECTION_NOTICE),
+        NumberRangeDef(
+            key = "review_subjects_current", title = "Current-level items",
+            prefKey = "review_subjects_current", minKey = "review_subjects_current_min",
+        ),
+        NumberRangeDef(
+            key = "review_subjects_earlier", title = "Earlier-level items",
+            prefKey = "review_subjects_earlier", minKey = "review_subjects_earlier_min",
+        ),
+        NumberRangeDef(
+            key = "review_subjects_radical", title = "Radicals",
+            prefKey = "review_subjects_radical", minKey = "review_subjects_radical_min",
+        ),
+        NumberRangeDef(
+            key = "review_subjects_kanji", title = "Kanji",
+            prefKey = "review_subjects_kanji", minKey = "review_subjects_kanji_min",
+        ),
+        NumberRangeDef(
+            key = "review_subjects_vocabulary", title = "Vocabulary",
+            prefKey = "review_subjects_vocabulary", minKey = "review_subjects_vocabulary_min",
+        ),
+        NumberRangeDef(
+            key = "review_subjects_kana_vocabulary", title = "Kana Vocabulary",
+            prefKey = "review_subjects_kana_vocabulary", minKey = "review_subjects_kana_vocabulary_min",
+        ),
+    ),
+)
 
 /**
- * Self-study advanced settings.
+ * Advanced self-study settings.
  */
-@Composable
-private fun AdvancedSelfStudySettings(onBack: () -> Unit) {
-    val prefs = prefs()
-
-    AdvancedSubScreen(title = "Self-study advanced settings", onBack = onBack) {
-        DropdownRow(
-            title = "Order",
+private fun advancedSelfStudyGroups(): List<SettingGroup> = listOf(
+    group(
+        "Ordering",
+        SelectDef(
+            key = "self_study_order", title = "Order",
             options = REVIEW_ORDER_OPTIONS,
-            value = prefs.getString("self_study_order", "SHUFFLE") ?: "SHUFFLE",
-            onValueChange = { setPrefString(it, "self_study_order", prefs) },
-        )
-        SwitchRow(
-            title = "Reverse order",
-            checked = prefs.getBoolean("self_study_order_reversed", false),
-            onCheckedChange = { setPrefBoolean(it, "self_study_order_reversed", prefs) },
-        )
-        SwitchRow(
-            title = "Overdue items first",
-            checked = prefs.getBoolean("self_study_order_overdue_first", false),
-            onCheckedChange = { setPrefBoolean(it, "self_study_order_overdue_first", prefs) },
-        )
-        DropdownRow(
-            title = "Priority",
+            prefKey = "self_study_order", default = "SHUFFLE",
+        ),
+        SwitchDef(
+            key = "self_study_order_reversed", title = "Reverse order",
+            prefKey = "self_study_order_reversed",
+        ),
+        SwitchDef(
+            key = "self_study_order_overdue_first", title = "Overdue items first",
+            prefKey = "self_study_order_overdue_first",
+        ),
+        SelectDef(
+            key = "self_study_order_priority", title = "Priority",
             options = SESSION_PRIORITY_OPTIONS,
-            value = prefs.getString("self_study_order_priority", "NONE") ?: "NONE",
-            onValueChange = { setPrefString(it, "self_study_order_priority", prefs) },
-        )
-        SwitchRow(
-            title = "Shuffle after selecting items",
+            prefKey = "self_study_order_priority", default = "NONE",
+        ),
+        SwitchDef(
+            key = "self_study_shuffle_after_selection", title = "Shuffle after selecting items",
             summary = "Items are selected for the session according to ordering settings, " +
                 "but after that they are shuffled randomly.",
-            checked = prefs.getBoolean("self_study_shuffle_after_selection", false),
-            onCheckedChange = { setPrefBoolean(it, "self_study_shuffle_after_selection", prefs) },
-        )
-        SwitchRow(
-            title = "Reading/meaning back-to-back",
-            checked = prefs.getBoolean("self_study_back_to_back", false),
-            onCheckedChange = { setPrefBoolean(it, "self_study_back_to_back", prefs) },
-        )
-        SwitchRow(
-            title = "Reading before meaning",
-            checked = prefs.getBoolean("self_study_reading_first", false),
-            onCheckedChange = { setPrefBoolean(it, "self_study_reading_first", prefs) },
-        )
-        SwitchRow(
-            title = "Meaning before reading",
-            checked = prefs.getBoolean("self_study_meaning_first", false),
-            onCheckedChange = { setPrefBoolean(it, "self_study_meaning_first", prefs) },
-        )
-        SwitchRow(
-            title = "Anki mode for meanings",
-            checked = prefs.getBoolean("anki_mode_self_study_meaning", false),
-            onCheckedChange = { setPrefBoolean(it, "anki_mode_self_study_meaning", prefs) },
-        )
-        SwitchRow(
-            title = "Anki mode for readings",
-            checked = prefs.getBoolean("anki_mode_self_study_reading", false),
-            onCheckedChange = { setPrefBoolean(it, "anki_mode_self_study_reading", prefs) },
-        )
-        SwitchRow(
-            title = "Randomize inflections in self-study",
+            prefKey = "self_study_shuffle_after_selection",
+        ),
+    ),
+    group(
+        "Question order",
+        SwitchDef(
+            key = "self_study_back_to_back", title = "Reading/meaning back-to-back",
+            prefKey = "self_study_back_to_back",
+        ),
+        SwitchDef(
+            key = "self_study_reading_first", title = "Reading before meaning",
+            prefKey = "self_study_reading_first",
+        ),
+        SwitchDef(
+            key = "self_study_meaning_first", title = "Meaning before reading",
+            prefKey = "self_study_meaning_first",
+        ),
+    ),
+    group(
+        "Anki mode",
+        SwitchDef(
+            key = "anki_mode_self_study_meaning", title = "Anki mode for meanings",
+            prefKey = "anki_mode_self_study_meaning",
+        ),
+        SwitchDef(
+            key = "anki_mode_self_study_reading", title = "Anki mode for readings",
+            prefKey = "anki_mode_self_study_reading",
+        ),
+        SwitchDef(
+            key = "self_study_randomize_inflections", title = "Randomize inflections in self-study",
             summary = "Works best with Anki mode. Random inflections will be added to adjectives and verbs. " +
                 "Note that answers and audio will use only dictionary forms.",
-            checked = prefs.getBoolean("self_study_randomize_inflections", false),
-            onCheckedChange = { setPrefBoolean(it, "self_study_randomize_inflections", prefs) },
-        )
-        InfoNoticeRow(title = "", html = Constants.SUBJECT_SELECTION_NOTICE)
-        SubjectRangeRows(prefix = "self_study_subjects", prefs = prefs)
-    }
-}
+            prefKey = "self_study_randomize_inflections",
+        ),
+    ),
+    group(
+        "Subject selection",
+        InfoDef(title = "", html = Constants.SUBJECT_SELECTION_NOTICE),
+        NumberRangeDef(
+            key = "self_study_subjects_current", title = "Current-level items",
+            prefKey = "self_study_subjects_current", minKey = "self_study_subjects_current_min",
+        ),
+        NumberRangeDef(
+            key = "self_study_subjects_earlier", title = "Earlier-level items",
+            prefKey = "self_study_subjects_earlier", minKey = "self_study_subjects_earlier_min",
+        ),
+        NumberRangeDef(
+            key = "self_study_subjects_radical", title = "Radicals",
+            prefKey = "self_study_subjects_radical", minKey = "self_study_subjects_radical_min",
+        ),
+        NumberRangeDef(
+            key = "self_study_subjects_kanji", title = "Kanji",
+            prefKey = "self_study_subjects_kanji", minKey = "self_study_subjects_kanji_min",
+        ),
+        NumberRangeDef(
+            key = "self_study_subjects_vocabulary", title = "Vocabulary",
+            prefKey = "self_study_subjects_vocabulary", minKey = "self_study_subjects_vocabulary_min",
+        ),
+        NumberRangeDef(
+            key = "self_study_subjects_kana_vocabulary", title = "Kana Vocabulary",
+            prefKey = "self_study_subjects_kana_vocabulary", minKey = "self_study_subjects_kana_vocabulary_min",
+        ),
+    ),
+)
 
 /**
  * Other advanced settings.
  */
-@Composable
-private fun AdvancedOtherSettings(onBack: () -> Unit) {
-    val prefs = prefs()
-
-    AdvancedSubScreen(title = "Other advanced settings", onBack = onBack) {
-        TextRow(
-            title = "Overdue threshold percentage",
-            value = prefs.getString("overdue_threshold", "20") ?: "20",
-            onValueChange = { setPrefString(it, "overdue_threshold", prefs) },
+private fun advancedOtherGroups(): List<SettingGroup> = listOf(
+    group(
+        "Questions",
+        TextFieldDef(
+            key = "overdue_threshold", title = "Overdue threshold percentage",
+            prefKey = "overdue_threshold", default = "20",
             keyboardType = KeyboardType.Number,
-        )
-        SwitchRow(
-            title = "Quiz on/kun'yomi separately",
-            checked = prefs.getBoolean("kanji_mode_onkun", false),
-            onCheckedChange = { setPrefBoolean(it, "kanji_mode_onkun", prefs) },
-        )
-        DropdownRow(
-            title = "Special button 1 behavior (top right)",
+        ),
+        SwitchDef(
+            key = "kanji_mode_onkun", title = "Quiz on/kun'yomi separately",
+            prefKey = "kanji_mode_onkun",
+        ),
+        SwitchDef(
+            key = "shake_on_matching_kanji", title = "Soft-reject on single-kanji vocabulary",
+            summary = "If an incorrect reading is an alternative reading for the kanji, do a shake-and-retry instead of failing",
+            prefKey = "shake_on_matching_kanji", default = true,
+        ),
+        SwitchDef(
+            key = "indicate_kanji_reading_type", title = "Indicate type of reading for kanji quiz",
+            summary = "For a kanji reading question, indicate if the question requires an on'yomi or kun'yomi answer",
+            prefKey = "indicate_kanji_reading_type",
+        ),
+    ),
+    group(
+        "Buttons",
+        SelectDef(
+            key = "undo_button", title = "Special button 1 behavior (top right)",
             options = SPECIAL_BUTTON_OPTIONS,
-            value = prefs.getString("undo_button", "DISABLE") ?: "DISABLE",
-            onValueChange = { setPrefString(it, "undo_button", prefs) },
-        )
-        DropdownRow(
-            title = "Special button 2 behavior (bottom left)",
+            prefKey = "undo_button", default = "DISABLE",
+        ),
+        SelectDef(
+            key = "ignore_button", title = "Special button 2 behavior (bottom left)",
             options = SPECIAL_BUTTON_OPTIONS,
-            value = prefs.getString("ignore_button", "DISABLE") ?: "DISABLE",
-            onValueChange = { setPrefString(it, "ignore_button", prefs) },
-        )
-        DropdownRow(
-            title = "Special button 3 behavior (top left)",
+            prefKey = "ignore_button", default = "DISABLE",
+        ),
+        SelectDef(
+            key = "special_button_3", title = "Special button 3 behavior (top left)",
             options = SPECIAL_BUTTON_OPTIONS,
-            value = prefs.getString("special_button_3", "DISABLE") ?: "DISABLE",
-            onValueChange = { setPrefString(it, "special_button_3", prefs) },
-        )
-        DropdownRow(
-            title = "Don't know button behavior",
+            prefKey = "special_button_3", default = "DISABLE",
+        ),
+        SelectDef(
+            key = "dont_know_button", title = "Don't know button behavior",
             options = listOf(
                 Pair("Disable", "DISABLE"),
                 Pair("Enable", "ENABLE"),
                 Pair("Hide if Special button 2 is visible", "ONLY_IF_IGNORE_HIDDEN"),
             ),
-            value = prefs.getString("dont_know_button", "ONLY_IF_IGNORE_HIDDEN") ?: "ONLY_IF_IGNORE_HIDDEN",
-            onValueChange = { setPrefString(it, "dont_know_button", prefs) },
-        )
-        SwitchRow(
-            title = "Soft-reject on single-kanji vocabulary",
-            summary = "If an incorrect reading is an alternative reading for the kanji, do a shake-and-retry instead of failing",
-            checked = prefs.getBoolean("shake_on_matching_kanji", true),
-            onCheckedChange = { setPrefBoolean(it, "shake_on_matching_kanji", prefs) },
-        )
-        SwitchRow(
-            title = "Show full session log",
+            prefKey = "dont_know_button", default = "ONLY_IF_IGNORE_HIDDEN",
+        ),
+    ),
+    group(
+        "Session",
+        SwitchDef(
+            key = "full_session_log", title = "Show full session log",
             summary = "This may reveal inappropriate hints and answers",
-            checked = prefs.getBoolean("full_session_log", false),
-            onCheckedChange = { setPrefBoolean(it, "full_session_log", prefs) },
-        )
-        SwitchRow(
-            title = "Indicate type of reading for kanji quiz",
-            summary = "For a kanji reading question, indicate if the question requires an on'yomi or kun'yomi answer",
-            checked = prefs.getBoolean("indicate_kanji_reading_type", false),
-            onCheckedChange = { setPrefBoolean(it, "indicate_kanji_reading_type", prefs) },
-        )
-    }
-}
-
-/**
- * The six subject-selection range rows for one session type.
- */
-@Composable
-private fun SubjectRangeRows(prefix: String, prefs: SharedPreferences) {
-    NumberRangeRow(title = "Current-level items", key = "${prefix}_current", prefs = prefs)
-    NumberRangeRow(title = "Earlier-level items", key = "${prefix}_earlier", prefs = prefs)
-    NumberRangeRow(title = "Radicals", key = "${prefix}_radical", prefs = prefs)
-    NumberRangeRow(title = "Kanji", key = "${prefix}_kanji", prefs = prefs)
-    NumberRangeRow(title = "Vocabulary", key = "${prefix}_vocabulary", prefs = prefs)
-    if (prefix == "lesson_subjects") {
-        // Legacy quirk: GlobalSettings reads the lesson kana-vocabulary min
-        // from a key with a capital K, so write that key.
-        NumberRangeRow(
-            title = "Kana Vocabulary",
-            key = "${prefix}_kana_vocabulary",
-            prefs = prefs,
-            minKey = "lesson_subjects_Kana_vocabulary_min",
-        )
-    }
-    else {
-        NumberRangeRow(title = "Kana Vocabulary", key = "${prefix}_kana_vocabulary", prefs = prefs)
-    }
-}
+            prefKey = "full_session_log",
+        ),
+    ),
+)
 
 //
 // Helpers for reading and writing settings.
 //
-
-/**
- * Get the default shared preferences, where all settings are stored.
- */
-@Composable
-private fun prefs(): SharedPreferences {
-    val context = LocalContext.current
-    return remember { PreferenceManager.getDefaultSharedPreferences(context) }
-}
 
 private fun setPrefBoolean(value: Boolean, key: String, prefs: SharedPreferences) {
     prefs.edit { putBoolean(key, value) }
@@ -2078,14 +2697,35 @@ private fun SettingsTopBar(
         title = { Text(text = title) },
         navigationIcon = {
             IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                MaterialSymbolIcon(
+                    icon = MaterialSymbolsIcons.ArrowBack,
                     contentDescription = "Back",
                 )
             }
         },
     )
 }
+
+private val NETWORK_RULE_OPTIONS = listOf(
+    Pair("Always allow sync and downloads", "ALWAYS"),
+    Pair("Always allow sync, downloads only on unmetered connections (WiFi)", "DOWNLOAD_WIFI_ONLY"),
+    Pair("Allow sync and downloads only on unmetered connections (WiFi)", "WIFI_ONLY"),
+)
+
+private val VOICE_OPTIONS = listOf(
+    Pair("Random", "RANDOM"),
+    Pair("Masculine", "MALE"),
+    Pair("Feminine", "FEMALE"),
+    Pair("Alternate between voices", "ALTERNATE"),
+)
+
+private val CLOSE_ENOUGH_OPTIONS = listOf(
+    Pair("Accept silently", "SILENTLY_ACCEPT"),
+    Pair("Accept and show a toast", "ACCEPT_WITH_TOAST"),
+    Pair("Accept, show a toast, disable lightning mode for this question", "ACCEPT_WITH_TOAST_NO_LM"),
+    Pair("Shake and retry", "SHAKE_AND_RETRY"),
+    Pair("Reject", "REJECT"),
+)
 
 private val THEME_OPTIONS = listOf(
     Pair("Wanikani", "LIGHT"),
@@ -2160,16 +2800,6 @@ private val SPECIAL_BUTTON_OPTIONS = listOf(
     Pair("Toggle lightning mode", "TOGGLE_LIGHTNING_MODE"),
 )
 
-// About sections
-enum class AboutSectionType {
-    INFO,
-    LINK,
-    SUPPORT,
-    OPEN_SOURCE,
-    FONTS,
-    INFLUENCES,
-}
-
 private val SUBJECT_CARD_LAYOUT_OPTIONS = listOf(
     Pair("Normal", "NORMAL"),
     Pair("Compact with progression info", "COMPACT"),
@@ -2179,6 +2809,16 @@ private val SUBJECT_CARD_LAYOUT_OPTIONS = listOf(
 //
 // About.
 //
+
+// About sections
+enum class AboutSectionType {
+    INFO,
+    LINK,
+    SUPPORT,
+    OPEN_SOURCE,
+    FONTS,
+    INFLUENCES,
+}
 
 private const val ABOUT_URL_TAG = "URL"
 
@@ -2198,8 +2838,7 @@ private fun aboutParagraph(segments: List<AboutSegment>) {
         for ((text1, url) in segments) {
             if (url == null) {
                 append(text1)
-            }
-            else {
+            } else {
                 pushStringAnnotation(ABOUT_URL_TAG, url)
                 withStyle(
                     SpanStyle(
@@ -2227,51 +2866,11 @@ private fun aboutParagraph(segments: List<AboutSegment>) {
 }
 
 /**
- * A row with text and optional link in an About card.
- */
-@Composable
-private fun AboutRow(text: String, link: AboutSegment? = null) {
-    if (link == null) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.fillMaxWidth()
-        )
-    } else {
-        val uriHandler = LocalUriHandler.current
-        val linkColor = MaterialTheme.colorScheme.primary
-
-        val annotatedText = buildAnnotatedString {
-            append(text)
-            pushStringAnnotation(ABOUT_URL_TAG, link.url!!)
-            withStyle(SpanStyle(color = linkColor)) {
-                append(link.text)
-            }
-            pop()
-        }
-
-        ClickableText(
-            text = annotatedText,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { offset ->
-                annotatedText.getStringAnnotations(ABOUT_URL_TAG, offset, offset)
-                    .firstOrNull()
-                    ?.let { uriHandler.openUri(it.item) }
-            }
-        )
-    }
-}
-
-/**
- * The About page, a redesign of the legacy AboutActivity content using Material 3.
+ * The About page, a redesign of the legacy AboutActivity content using
+ * Material Expressive 3.
  */
 @Composable
 private fun AboutSettings() {
-    val uriHandler = LocalUriHandler.current
-    val linkColor = MaterialTheme.colorScheme.primary
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -2296,8 +2895,7 @@ private fun AboutSettings() {
             onRelease = { view ->
                 try {
                     Glide.with(view).clear(view)
-                }
-                catch (ignored: IllegalArgumentException) {
+                } catch (ignored: IllegalArgumentException) {
                     // Glide refuses destroyed activities; it cleans up its own
                     // requests in that case anyway.
                 }
@@ -2559,3 +3157,6 @@ private fun AboutSettings() {
         }
     }
 }
+
+
+

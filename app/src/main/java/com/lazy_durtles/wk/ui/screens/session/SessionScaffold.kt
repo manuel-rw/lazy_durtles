@@ -3,10 +3,6 @@ package com.lazy_durtles.wk.ui.screens.session
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -33,6 +29,8 @@ import com.lazy_durtles.wk.R
 import com.lazy_durtles.wk.WkApplication
 import com.lazy_durtles.wk.enums.SessionType
 import com.lazy_durtles.wk.model.Session
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolsIcons
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolIcon
 import java.util.Locale
 
 /**
@@ -77,8 +75,8 @@ internal fun SessionScaffold(
                 title = { Text(title) },
                 navigationIcon = {
                     IconButton(onClick = onFinishSession) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                        MaterialSymbolIcon(
+                            icon = MaterialSymbolsIcons.ArrowBack,
                             contentDescription = "Back",
                         )
                     }
@@ -94,8 +92,8 @@ internal fun SessionScaffold(
                         },
                         enabled = session.canBeAbandoned(),
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
+                        MaterialSymbolIcon(
+                            icon = MaterialSymbolsIcons.Close,
                             contentDescription = "Abandon session",
                         )
                     }
@@ -112,8 +110,8 @@ internal fun SessionScaffold(
                     }
                     Box {
                         IconButton(onClick = { menuExpanded = true }) {
-                            Icon(
-                                imageVector = Icons.Default.MoreVert,
+                            MaterialSymbolIcon(
+                                icon = MaterialSymbolsIcons.MoreVert,
                                 contentDescription = "More options",
                             )
                         }

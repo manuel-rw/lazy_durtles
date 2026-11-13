@@ -14,12 +14,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolsIcons
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolIcon
+import com.lazy_durtles.wk.ui.screens.settings.SettingsAlertDialog
+import com.lazy_durtles.wk.ui.screens.settings.SettingsDialogShape
+import com.lazy_durtles.wk.ui.screens.settings.TonalIcon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -115,8 +118,8 @@ fun FontImportScreen(
                 title = { Text(text = "Import fonts") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        MaterialSymbolIcon(
+                            icon = MaterialSymbolsIcons.ArrowBack,
                             contentDescription = "Back",
                         )
                     }
@@ -153,77 +156,62 @@ fun FontImportScreen(
     }
 
     importCandidate?.let { (uri, fileName) ->
-        AlertDialog(
-            onDismissRequest = { importCandidate = null },
-            title = { Text(text = "Overwrite file?") },
-            text = {
-                Text(text = "A file named '$fileName' already exists. Do you want to overwrite it?")
+        SettingsAlertDialog(
+            title = "Overwrite file?",
+            text = "A file named '$fileName' already exists. Do you want to overwrite it?",
+            confirmLabel = "Yes",
+            dismissLabel = "No",
+            onConfirm = {
+                importCandidate = null
+                importFile(uri, fileName)
             },
-            confirmButton = {
-                TextButton(onClick = {
-                    importCandidate = null
-                    importFile(uri, fileName)
-                }) {
-                    Text(text = "Yes")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { importCandidate = null }) {
-                    Text(text = "No")
-                }
-            },
+            onDismiss = { importCandidate = null },
         )
     }
 
     deleteCandidate?.let { name ->
-        AlertDialog(
-            onDismissRequest = { deleteCandidate = null },
-            title = { Text(text = "Delete file?") },
-            text = {
-                Text(text = "Are you sure you want to delete '$name'")
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    deleteCandidate = null
-                    scope.launch {
-                        withContext(Dispatchers.IO) {
-                            FontStorageUtil.deleteFont(name)
-                            FontStorageUtil.flushCache(name)
-                        }
-                        refresh()
+        SettingsAlertDialog(
+            title = "Delete file?",
+            text = "Are you sure you want to delete '$name'",
+            icon = MaterialSymbolsIcons.DeleteForever,
+            confirmLabel = "Delete",
+            dismissLabel = "Cancel",
+            destructive = true,
+            onConfirm = {
+                deleteCandidate = null
+                scope.launch {
+                    withContext(Dispatchers.IO) {
+                        FontStorageUtil.deleteFont(name)
+                        FontStorageUtil.flushCache(name)
                     }
-                }) {
-                    Text(text = "Yes")
+                    refresh()
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { deleteCandidate = null }) {
-                    Text(text = "No")
-                }
-            },
+            onDismiss = { deleteCandidate = null },
         )
     }
 
     if (sampleCandidate != null) {
         if (sampleLoadFailed) {
-            AlertDialog(
-                onDismissRequest = { sampleCandidate = null },
-                title = { Text(text = "Unable to load font") },
-                text = {
-                    Text(text = "There was an error attempting to load this font. You will not be able to use it in quizzes.")
-                },
-                confirmButton = {
-                    TextButton(onClick = { sampleCandidate = null }) {
-                        Text(text = "OK")
-                    }
-                },
+            SettingsAlertDialog(
+                title = "Unable to load font",
+                text = "There was an error attempting to load this font. You will not be able to use it in quizzes.",
+                icon = MaterialSymbolsIcons.Error,
+                onConfirm = { sampleCandidate = null },
             )
-        }
-        else {
+        } else {
             val typeface = sampleCandidate?.let { FontStorageUtil.getTypefaceConfiguration(it)?.typeface }
             AlertDialog(
                 onDismissRequest = { sampleCandidate = null },
-                title = { Text(text = "Font sample") },
+                shape = SettingsDialogShape,
+                icon = {
+                    TonalIcon(
+                        icon = MaterialSymbolsIcons.FontDownload,
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                },
+                title = { Text(text = "Font sample", style = MaterialTheme.typography.headlineSmall) },
                 text = {
                     Text(
                         text = "日本語の書体",

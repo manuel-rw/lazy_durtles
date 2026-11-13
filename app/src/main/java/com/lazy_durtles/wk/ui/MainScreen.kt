@@ -2,13 +2,11 @@ package com.lazy_durtles.wk.ui
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AccountCircle
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolsIcons
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolIcon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -45,6 +43,8 @@ import com.lazy_durtles.wk.WkApplication
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
     onStartLessons: () -> Unit,
     onStartReviews: () -> Unit,
     onResumeSession: () -> Unit,
@@ -56,14 +56,12 @@ fun MainScreen(
     onSrsBucketClick: (bucket: Int) -> Unit,
     onSubjectClick: (subjectId: Long, subjectIds: List<Long>) -> Unit,
     onSearchResults: (searchParametersJson: String, searchType: Int, presetName: String?) -> Unit,
-    onBackPressed: () -> Unit = { },
     modifier: Modifier = Modifier,
     initialSearchParametersJson: String? = null,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val apiState by LiveApiState.getInstance().observeAsState(initial = ApiState.UNKNOWN)
     var isAudioMuted by remember { mutableStateOf(WkApplication.getDatabase().propertiesDao().getIsMuted()) }
-    var selectedTab by remember { mutableStateOf(0) }
 
     LaunchedEffect(apiState) {
         when (apiState) {
@@ -105,10 +103,10 @@ fun MainScreen(
                 NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
                     NavigationBarItem(
                         selected = selectedTab == 0,
-                        onClick = { selectedTab = 0 },
+                        onClick = { onTabSelected(0) },
                         icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Home,
+                            MaterialSymbolIcon(
+                                icon = MaterialSymbolsIcons.Home, filled = false,
                                 contentDescription = "Dashboard",
                             )
                         },
@@ -116,10 +114,10 @@ fun MainScreen(
                     )
                     NavigationBarItem(
                         selected = selectedTab == 1,
-                        onClick = { selectedTab = 1 },
+                        onClick = { onTabSelected(1) },
                         icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Search,
+                            MaterialSymbolIcon(
+                                icon = MaterialSymbolsIcons.Search, filled = false,
                                 contentDescription = "Search",
                             )
                         },
@@ -127,10 +125,10 @@ fun MainScreen(
                     )
                     NavigationBarItem(
                         selected = selectedTab == 2,
-                        onClick = { selectedTab = 2 },
+                        onClick = { onTabSelected(2) },
                         icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.AccountCircle,
+                            MaterialSymbolIcon(
+                                icon = MaterialSymbolsIcons.AccountCircle, filled = false,
                                 contentDescription = "Profile",
                             )
                         },
@@ -156,20 +154,17 @@ fun MainScreen(
                     onSubjectClick = { subjectId, allIds ->
                         onSubjectClick(subjectId, allIds.toList())
                     },
-                    onBackPressed = onBackPressed,
                     modifier = Modifier.padding(paddingValues),
                 )
                 1 -> SearchScreen(
                     onSubjectClick = onSubjectClick,
                     onSearchResults = onSearchResults,
                     initialParametersJson = initialSearchParametersJson,
-                    onBackPressed = onBackPressed,
                     modifier = Modifier.padding(paddingValues),
                 )
                 2 -> ProfileScreen(
                     onGoToSettings = onGoToSettings,
                     onViewSessionLog = onViewSessionLog,
-                    onBackPressed = onBackPressed,
                     modifier = Modifier.padding(paddingValues),
                 )
             }
@@ -194,6 +189,8 @@ private fun levelProgressSearchParameters(level: Int, type: SubjectType): String
 @Composable
 fun MainScreenPreview() {
     MainScreen(
+        selectedTab = 0,
+        onTabSelected = {},
         onStartLessons = {},
         onStartReviews = {},
         onResumeSession = {},

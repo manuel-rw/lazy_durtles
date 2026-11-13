@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.preference.PreferenceManager
 import com.lazy_durtles.wk.GlobalSettings
 import com.lazy_durtles.wk.enums.ActiveTheme
+import com.lazy_durtles.wk.ui.icons.ProvideMaterialSymbolsIcons
 
 private const val THEME_PREF_KEY = "theme"
 private const val NIGHT_THEME_PREF_KEY = "nightTheme"
@@ -81,8 +82,9 @@ fun LazyDurtlesTheme(content: @Composable () -> Unit) {
 
     MaterialTheme(
         colorScheme = colorScheme,
-        content = content,
-    )
+    ) {
+        ProvideMaterialSymbolsIcons(content = content)
+    }
 }
 
 /**

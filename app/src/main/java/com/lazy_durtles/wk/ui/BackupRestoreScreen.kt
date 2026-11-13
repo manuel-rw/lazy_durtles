@@ -20,11 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -32,6 +27,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolsIcons
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolIcon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -39,6 +36,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import com.lazy_durtles.wk.ui.screens.settings.SettingsAlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -144,8 +142,8 @@ fun BackupRestoreScreen(
                 title = { Text(text = "Backup and restore") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        MaterialSymbolIcon(
+                            icon = MaterialSymbolsIcons.ArrowBack,
                             contentDescription = "Back",
                         )
                     }
@@ -192,37 +190,26 @@ fun BackupRestoreScreen(
     }
 
     confirmOp?.let { op ->
-        AlertDialog(
-            onDismissRequest = { confirmOp = null },
-            title = { Text(text = if (op == BackupOp.EXPORT) "Export settings?" else "Import settings?") },
-            text = {
-                Text(
-                    text = if (op == BackupOp.EXPORT) {
-                        "All app settings will be written to a backup file. " +
-                            "You can choose where to save it in the next step."
-                    } else {
-                        "Your current settings will be replaced by the settings in the backup file. " +
-                            "This cannot be undone."
-                    },
-                )
+        SettingsAlertDialog(
+            title = if (op == BackupOp.EXPORT) "Export settings?" else "Import settings?",
+            text = if (op == BackupOp.EXPORT) {
+                "All app settings will be written to a backup file. " +
+                    "You can choose where to save it in the next step."
+            } else {
+                "Your current settings will be replaced by the settings in the backup file. " +
+                    "This cannot be undone."
             },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirmOp = null
-                    if (op == BackupOp.EXPORT) {
-                        saveFileLauncher.launch(backupFileName())
-                    } else {
-                        pickFileLauncher.launch(arrayOf("*/*"))
-                    }
-                }) {
-                    Text(text = if (op == BackupOp.EXPORT) "Export" else "Import")
+            icon = if (op == BackupOp.EXPORT) MaterialSymbolsIcons.Save else MaterialSymbolsIcons.OpenInNew,
+            confirmLabel = if (op == BackupOp.EXPORT) "Export" else "Import",
+            onConfirm = {
+                confirmOp = null
+                if (op == BackupOp.EXPORT) {
+                    saveFileLauncher.launch(backupFileName())
+                } else {
+                    pickFileLauncher.launch(arrayOf("*/*"))
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { confirmOp = null }) {
-                    Text(text = "Cancel")
-                }
-            },
+            onDismiss = { confirmOp = null },
         )
     }
 }
@@ -243,8 +230,8 @@ private fun InfoCard() {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.Top,
         ) {
-            Icon(
-                imageVector = Icons.Filled.Info,
+            MaterialSymbolIcon(
+                icon = MaterialSymbolsIcons.Info,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -341,14 +328,14 @@ private fun StatusCard(state: BackupUiState) {
             title = if (state.op == BackupOp.EXPORT) "Settings exported" else "Settings imported",
             detail = state.detail,
         ) {
-            Icon(imageVector = Icons.Filled.CheckCircle, contentDescription = null, modifier = Modifier.size(24.dp))
+            MaterialSymbolIcon(icon = MaterialSymbolsIcons.CheckCircle, contentDescription = null, modifier = Modifier.size(24.dp))
         }
         is BackupUiState.Error -> StatusCardLayout(
             containerColor = MaterialTheme.colorScheme.errorContainer,
             title = if (state.op == BackupOp.EXPORT) "Export failed" else "Import failed",
             detail = state.message,
         ) {
-            Icon(imageVector = Icons.Filled.Warning, contentDescription = null, modifier = Modifier.size(24.dp))
+            MaterialSymbolIcon(icon = MaterialSymbolsIcons.Warning, contentDescription = null, modifier = Modifier.size(24.dp))
         }
         BackupUiState.Idle -> {}
     }
