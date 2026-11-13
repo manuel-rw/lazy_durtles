@@ -36,6 +36,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import com.lazy_durtles.wk.ui.screens.settings.SettingsAlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -189,37 +190,26 @@ fun BackupRestoreScreen(
     }
 
     confirmOp?.let { op ->
-        AlertDialog(
-            onDismissRequest = { confirmOp = null },
-            title = { Text(text = if (op == BackupOp.EXPORT) "Export settings?" else "Import settings?") },
-            text = {
-                Text(
-                    text = if (op == BackupOp.EXPORT) {
-                        "All app settings will be written to a backup file. " +
-                            "You can choose where to save it in the next step."
-                    } else {
-                        "Your current settings will be replaced by the settings in the backup file. " +
-                            "This cannot be undone."
-                    },
-                )
+        SettingsAlertDialog(
+            title = if (op == BackupOp.EXPORT) "Export settings?" else "Import settings?",
+            text = if (op == BackupOp.EXPORT) {
+                "All app settings will be written to a backup file. " +
+                    "You can choose where to save it in the next step."
+            } else {
+                "Your current settings will be replaced by the settings in the backup file. " +
+                    "This cannot be undone."
             },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirmOp = null
-                    if (op == BackupOp.EXPORT) {
-                        saveFileLauncher.launch(backupFileName())
-                    } else {
-                        pickFileLauncher.launch(arrayOf("*/*"))
-                    }
-                }) {
-                    Text(text = if (op == BackupOp.EXPORT) "Export" else "Import")
+            icon = if (op == BackupOp.EXPORT) MaterialSymbolsIcons.Save else MaterialSymbolsIcons.OpenInNew,
+            confirmLabel = if (op == BackupOp.EXPORT) "Export" else "Import",
+            onConfirm = {
+                confirmOp = null
+                if (op == BackupOp.EXPORT) {
+                    saveFileLauncher.launch(backupFileName())
+                } else {
+                    pickFileLauncher.launch(arrayOf("*/*"))
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { confirmOp = null }) {
-                    Text(text = "Cancel")
-                }
-            },
+            onDismiss = { confirmOp = null },
         )
     }
 }

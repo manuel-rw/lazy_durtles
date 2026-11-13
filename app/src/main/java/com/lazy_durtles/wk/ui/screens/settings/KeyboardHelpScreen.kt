@@ -126,15 +126,11 @@ fun KeyboardHelpScreen(
     }
 
     confirmation?.let { message ->
-        AlertDialog(
-            onDismissRequest = { confirmation = null },
-            title = { Text("Keyboard settings updated") },
-            text = { Text(message) },
-            confirmButton = {
-                TextButton(onClick = { confirmation = null }) {
-                    Text("OK")
-                }
-            },
+        SettingsAlertDialog(
+            title = "Keyboard settings updated",
+            text = message,
+            icon = MaterialSymbolsIcons.CheckCircle,
+            onConfirm = { confirmation = null },
         )
     }
 }

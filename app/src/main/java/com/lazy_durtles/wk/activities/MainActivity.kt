@@ -341,7 +341,7 @@ private sealed class Screen {
     data class Session(val type: String) : Screen()
     data object SessionLog : Screen()
     data object Settings : Screen()
-    data class SettingsCategory(val categoryId: String) : Screen()
+    data class SettingsCategory(val categoryId: String, val highlight: String? = null) : Screen()
     data class SearchResults(
         val searchParametersJson: String,
         val searchType: Int = 2,
@@ -368,6 +368,9 @@ private fun Screen.toJson(): JSONObject {
         is Screen.SettingsCategory -> {
             o.put("type", "settingsCategory")
             o.put("id", categoryId)
+            if (highlight != null) {
+                o.put("highlight", highlight)
+            }
         }
         is Screen.SearchResults -> {
             o.put("type", "searchResults")
@@ -400,7 +403,10 @@ private fun screenFromJson(o: JSONObject): Screen = when (o.getString("type")) {
     "session" -> Screen.Session(o.getString("sessionType"))
     "sessionLog" -> Screen.SessionLog
     "settings" -> Screen.Settings
-    "settingsCategory" -> Screen.SettingsCategory(o.getString("id"))
+    "settingsCategory" -> Screen.SettingsCategory(
+        o.getString("id"),
+        o.optString("highlight", "").ifEmpty { null },
+    )
     // Type names saved by older builds; theme customization and the keyboard
     // help screen are settings levels now.
     "themeCustomization" -> Screen.SettingsCategory("theme_customization")
@@ -548,15 +554,16 @@ private fun MainApplicationContent(
         Screen.Settings -> {
             SettingsScreen(
                 onBack = pop,
-                onOpenCategory = { push(Screen.SettingsCategory(it)) },
+                onOpenCategory = { id, highlight -> push(Screen.SettingsCategory(id, highlight)) },
             )
         }
         is Screen.SettingsCategory -> {
             SettingsCategoryScreen(
                 categoryId = screen.categoryId,
                 onBack = pop,
-                onOpenCategory = { push(Screen.SettingsCategory(it)) },
+                onOpenCategory = { id, highlight -> push(Screen.SettingsCategory(id, highlight)) },
                 onGoHome = goHome,
+                highlight = screen.highlight,
             )
         }
         is Screen.SearchResults -> {

@@ -16,9 +16,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import com.lazy_durtles.wk.ui.icons.MaterialSymbolsIcons
@@ -28,6 +25,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import com.lazy_durtles.wk.ui.screens.settings.SettingsAlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -163,23 +161,13 @@ fun NoApiKeyScreen(
     }
 
     if (showHelp) {
-        AlertDialog(
-            onDismissRequest = { showHelp = false },
-            confirmButton = {
-                TextButton(onClick = { showHelp = false }) {
-                    Text(text = "Got it")
-                }
-            },
-            title = { Text(text = "Getting a token") },
-            text = {
-                SelectionContainer {
-                    Column(
-                        modifier = Modifier.verticalScroll(rememberScrollState()),
-                    ) {
-                        HtmlNoticeText(html = Constants.NO_API_KEY_HELP_DOCUMENT)
-                    }
-                }
-            },
+        SettingsAlertDialog(
+            title = "Getting a token",
+            html = Constants.NO_API_KEY_HELP_DOCUMENT,
+            icon = MaterialSymbolsIcons.Help,
+            confirmLabel = "Got it",
+            onConfirm = { showHelp = false },
+            scrollable = true,
         )
     }
 }
