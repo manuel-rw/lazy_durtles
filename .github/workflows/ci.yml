@@ -86,6 +86,6 @@ jobs:
         with:
           name: instrumented-test-results
           path: |
-            app/build/outputs/androidTest-results/
-            app/build/reports/androidTests/
+            test-results/
+            test-reports/
           if-no-files-found: ignore

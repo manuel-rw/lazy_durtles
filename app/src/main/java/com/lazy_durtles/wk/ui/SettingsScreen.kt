@@ -2195,19 +2195,19 @@ private fun aboutParagraph(segments: List<AboutSegment>) {
     val uriHandler = LocalUriHandler.current
     val linkColor = MaterialTheme.colorScheme.primary
     val text = buildAnnotatedString {
-        for (segment in segments) {
-            if (segment.url == null) {
-                append(segment.text)
+        for ((text1, url) in segments) {
+            if (url == null) {
+                append(text1)
             }
             else {
-                pushStringAnnotation(ABOUT_URL_TAG, segment.url)
+                pushStringAnnotation(ABOUT_URL_TAG, url)
                 withStyle(
                     SpanStyle(
                         color = linkColor,
                         textDecoration = TextDecoration.Underline,
                     ),
                 ) {
-                    append(segment.text)
+                    append(text1)
                 }
                 pop()
             }
