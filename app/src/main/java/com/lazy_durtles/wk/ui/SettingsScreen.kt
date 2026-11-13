@@ -7,8 +7,10 @@ import android.os.Build
 import android.provider.Settings
 import android.widget.ImageView
 import android.widget.Toast
+import com.lazy_durtles.wk.Constants
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.clickable
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
