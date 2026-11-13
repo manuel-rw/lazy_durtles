@@ -8,6 +8,7 @@ import android.provider.Settings
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -226,7 +227,7 @@ private fun CategoryListScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onCategoryClick(category.id) }
+                            .clickable(onClick = { onCategoryClick(category.id) })
                             .padding(horizontal = 16.dp, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -2244,11 +2245,10 @@ private fun AboutRow(text: String, link: AboutSegment? = null) {
                     color = MaterialTheme.colorScheme.primary,
                 ),
                 modifier = Modifier.clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                ) {
-                    LocalUriHandler.current.openUri(link.url)
-                },
+                    onClick = {
+                        LocalUriHandler.current.openUri(link.url)
+                    }
+                ),
             )
         }
     }
@@ -2272,9 +2272,7 @@ private fun AboutSettings() {
         // it (it casts the drawable to BitmapDrawable and crashes on API 28+),
         // so render it through Glide like the legacy AboutActivity does.
         AndroidView(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(180.dp),
+            modifier = Modifier.fillMaxWidth(),
             factory = { context ->
                 ImageView(context).apply {
                     adjustViewBounds = true
