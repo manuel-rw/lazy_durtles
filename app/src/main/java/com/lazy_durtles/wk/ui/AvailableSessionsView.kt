@@ -17,11 +17,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowForward
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material3.Icon
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolsIcons
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolIcon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -29,7 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -59,7 +55,7 @@ fun AvailableSessionsView(
         SessionCountCard(
             label = "Lessons",
             count = lessons,
-            icon = Icons.Outlined.Edit,
+            icon = MaterialSymbolsIcons.ArrowBack,
             caption = "Ready to learn",
             onClick = onStartLessons,
             container = MaterialTheme.colorScheme.primaryContainer,
@@ -71,7 +67,7 @@ fun AvailableSessionsView(
         SessionCountCard(
             label = "Reviews",
             count = reviews,
-            icon = Icons.Outlined.Refresh,
+            icon = MaterialSymbolsIcons.Refresh,
             caption = "Available now",
             onClick = onStartReviews,
             container = MaterialTheme.colorScheme.primary,
@@ -92,7 +88,7 @@ fun AvailableSessionsView(
 private fun SessionCountCard(
     label: String,
     count: Int,
-    icon: ImageVector,
+    icon: Char,
     caption: String,
     onClick: (() -> Unit)?,
     container: Color,
@@ -151,7 +147,7 @@ private fun SessionCountCard(
 private fun SessionCountCardContent(
     label: String,
     count: Int,
-    icon: ImageVector,
+    icon: Char,
     caption: String,
     active: Boolean,
     contentColor: Color,
@@ -168,7 +164,7 @@ private fun SessionCountCardContent(
                     .background(color = contentColor.copy(alpha = 0.2f), shape = CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
+                MaterialSymbolIcon(
                     icon,
                     contentDescription = null,
                     modifier = Modifier.size(20.dp),
@@ -183,8 +179,8 @@ private fun SessionCountCardContent(
             )
             Spacer(Modifier.weight(1f))
             if (active) {
-                Icon(
-                    Icons.AutoMirrored.Outlined.ArrowForward,
+                MaterialSymbolIcon(
+                    icon = MaterialSymbolsIcons.ArrowForward,
                     contentDescription = null,
                     modifier = Modifier.size(20.dp),
                     tint = contentColor,

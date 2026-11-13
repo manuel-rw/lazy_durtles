@@ -20,11 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -32,6 +27,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolsIcons
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolIcon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -144,8 +141,8 @@ fun BackupRestoreScreen(
                 title = { Text(text = "Backup and restore") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        MaterialSymbolIcon(
+                            icon = MaterialSymbolsIcons.ArrowBack,
                             contentDescription = "Back",
                         )
                     }
@@ -243,8 +240,8 @@ private fun InfoCard() {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.Top,
         ) {
-            Icon(
-                imageVector = Icons.Filled.Info,
+            MaterialSymbolIcon(
+                icon = MaterialSymbolsIcons.Info,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -341,14 +338,14 @@ private fun StatusCard(state: BackupUiState) {
             title = if (state.op == BackupOp.EXPORT) "Settings exported" else "Settings imported",
             detail = state.detail,
         ) {
-            Icon(imageVector = Icons.Filled.CheckCircle, contentDescription = null, modifier = Modifier.size(24.dp))
+            MaterialSymbolIcon(icon = MaterialSymbolsIcons.CheckCircle, contentDescription = null, modifier = Modifier.size(24.dp))
         }
         is BackupUiState.Error -> StatusCardLayout(
             containerColor = MaterialTheme.colorScheme.errorContainer,
             title = if (state.op == BackupOp.EXPORT) "Export failed" else "Import failed",
             detail = state.message,
         ) {
-            Icon(imageVector = Icons.Filled.Warning, contentDescription = null, modifier = Modifier.size(24.dp))
+            MaterialSymbolIcon(icon = MaterialSymbolsIcons.Warning, contentDescription = null, modifier = Modifier.size(24.dp))
         }
         BackupUiState.Idle -> {}
     }

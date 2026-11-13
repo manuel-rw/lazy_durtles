@@ -28,9 +28,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -38,6 +35,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolsIcons
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolIcon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -790,8 +789,8 @@ private fun AnsweredQuestionContent(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(
-                        imageVector = if (isCorrect) Icons.Default.Check else Icons.Default.Close,
+                    MaterialSymbolIcon(
+                        icon = if (isCorrect) MaterialSymbolsIcons.Check else MaterialSymbolsIcons.Close,
                         contentDescription = if (isCorrect) "Correct" else "Incorrect",
                         tint = if (isCorrect) CorrectColor else MaterialTheme.colorScheme.error,
                     )
@@ -860,7 +859,7 @@ private fun CorrectOverlay(trigger: Int, modifier: Modifier = Modifier) {
         trigger = trigger,
         speckColors = listOf(Color(0xFF66BB6A), Color(0xFF81C784), Color(0xFFA5D6A7), Color(0xFF43A047)),
         circleColor = CorrectColor,
-        iconVector = Icons.Default.Check,
+        icon = MaterialSymbolsIcons.Check,
         iconDescription = "Correct",
         modifier = modifier,
     )
@@ -872,7 +871,7 @@ private fun FailOverlay(trigger: Int, modifier: Modifier = Modifier) {
         trigger = trigger,
         speckColors = listOf(Color(0xFFE57373), Color(0xFFEF9A9A), Color(0xFFE53935)),
         circleColor = MaterialTheme.colorScheme.error,
-        iconVector = Icons.Default.Close,
+        icon = MaterialSymbolsIcons.Close,
         iconDescription = "Incorrect",
         modifier = modifier,
     )
@@ -883,7 +882,7 @@ private fun FeedbackOverlay(
     trigger: Int,
     speckColors: List<Color>,
     circleColor: Color,
-    iconVector: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: Char,
     iconDescription: String,
     modifier: Modifier = Modifier,
 ) {
@@ -937,8 +936,8 @@ private fun FeedbackOverlay(
                 .background(circleColor, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(
-                imageVector = iconVector,
+            MaterialSymbolIcon(
+                icon = icon,
                 contentDescription = iconDescription,
                 tint = Color.White,
                 modifier = Modifier.size(48.dp),

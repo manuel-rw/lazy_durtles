@@ -25,27 +25,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Create
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolsIcons
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolIcon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -180,25 +166,25 @@ private data class SettingsCategory(
     val id: String,
     val title: String,
     val description: String,
-    val icon: Any? = null, // ImageVector or drawable resource ID
+    val icon: Any? = null, // Char (Material Symbols codepoint) or drawable resource ID
 )
 
 private val CATEGORIES = listOf(
-    SettingsCategory("api", "API and audio download", "API token and network rules", Icons.Filled.Settings),
-    SettingsCategory("display", "Display", "Theme and question screen appearance", Icons.Filled.Star),
-    SettingsCategory("dashboard", "Dashboard", "What to show on the dashboard", Icons.Filled.Home),
-    SettingsCategory("subject_info", "Subject Info", "Presentation of subject info details", Icons.Filled.Info),
-    SettingsCategory("audio", "Audio", "Autoplay and voice settings", Icons.Filled.PlayArrow),
-    SettingsCategory("download_audio", "Download audio", "Download audio files for offline use", Icons.Filled.KeyboardArrowDown),
-    SettingsCategory("lesson_review", "Lesson / review", "Session size and question behavior", Icons.AutoMirrored.Filled.List),
-    SettingsCategory("keyboard", "Keyboard input", "Input method related settings", Icons.Filled.Edit),
-    SettingsCategory("font", "Font", "Font selection and sizes", Icons.Filled.Create),
-    SettingsCategory("other", "Notifications and other settings", "Search engines, notifications and miscellaneous", Icons.Filled.Notifications),
-    SettingsCategory("experimental", "Experimental (temporary) settings", "Short-term experiments, these will go away", Icons.Filled.Warning),
-    SettingsCategory("advanced", "Advanced settings", "For experienced users", Icons.Filled.Build),
-    SettingsCategory("other_actions", "Other actions", "Data import/export, resets", Icons.Filled.Delete),
+    SettingsCategory("api", "API and audio download", "API token and network rules", MaterialSymbolsIcons.Settings),
+    SettingsCategory("display", "Display", "Theme and question screen appearance", MaterialSymbolsIcons.Star),
+    SettingsCategory("dashboard", "Dashboard", "What to show on the dashboard", MaterialSymbolsIcons.Home),
+    SettingsCategory("subject_info", "Subject Info", "Presentation of subject info details", MaterialSymbolsIcons.Info),
+    SettingsCategory("audio", "Audio", "Autoplay and voice settings", MaterialSymbolsIcons.PlayArrow),
+    SettingsCategory("download_audio", "Download audio", "Download audio files for offline use", MaterialSymbolsIcons.KeyboardArrowDown),
+    SettingsCategory("lesson_review", "Lesson / review", "Session size and question behavior", MaterialSymbolsIcons.List),
+    SettingsCategory("keyboard", "Keyboard input", "Input method related settings", MaterialSymbolsIcons.Edit),
+    SettingsCategory("font", "Font", "Font selection and sizes", MaterialSymbolsIcons.Create),
+    SettingsCategory("other", "Notifications and other settings", "Search engines, notifications and miscellaneous", MaterialSymbolsIcons.Notifications),
+    SettingsCategory("experimental", "Experimental (temporary) settings", "Short-term experiments, these will go away", MaterialSymbolsIcons.Warning),
+    SettingsCategory("advanced", "Advanced settings", "For experienced users", MaterialSymbolsIcons.Build),
+    SettingsCategory("other_actions", "Other actions", "Data import/export, resets", MaterialSymbolsIcons.Delete),
     SettingsCategory("backup", "Backup and restore", "Export settings to a file, or import a backup", R.drawable.ic_backup_24dp),
-    SettingsCategory("about", "About", "About this app", Icons.Filled.Info),
+    SettingsCategory("about", "About", "About this app", MaterialSymbolsIcons.Info),
 )
 
 /**
@@ -235,8 +221,8 @@ private fun CategoryListScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         when (val icon = category.icon) {
-                            is ImageVector -> Icon(
-                                imageVector = icon,
+                            is Char -> MaterialSymbolIcon(
+                                icon = icon,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.padding(end = 16.dp),
@@ -2078,8 +2064,8 @@ private fun SettingsTopBar(
         title = { Text(text = title) },
         navigationIcon = {
             IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                MaterialSymbolIcon(
+                    icon = MaterialSymbolsIcons.ArrowBack,
                     contentDescription = "Back",
                 )
             }

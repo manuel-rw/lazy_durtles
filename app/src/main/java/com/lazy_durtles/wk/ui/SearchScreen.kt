@@ -11,13 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolsIcons
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolIcon
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBar
@@ -122,8 +120,8 @@ fun SearchScreen(
             onActiveChange = { },
             placeholder = { Text("Search") },
             leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
+                MaterialSymbolIcon(
+                    icon = MaterialSymbolsIcons.Search,
                     contentDescription = "Search",
                 )
             },
@@ -139,8 +137,8 @@ fun SearchScreen(
                 .padding(vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                imageVector = if (showAdvanced) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+            MaterialSymbolIcon(
+                icon = if (showAdvanced) MaterialSymbolsIcons.KeyboardArrowUp else MaterialSymbolsIcons.KeyboardArrowDown,
                 contentDescription = if (showAdvanced) "Collapse" else "Expand",
             )
             Text(
@@ -238,8 +236,8 @@ private fun SearchEmptyState() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Icon(
-            imageVector = Icons.Default.Search,
+        MaterialSymbolIcon(
+            icon = MaterialSymbolsIcons.Search,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(48.dp),

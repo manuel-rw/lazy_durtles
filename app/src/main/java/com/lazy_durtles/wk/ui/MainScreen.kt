@@ -2,13 +2,11 @@ package com.lazy_durtles.wk.ui
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AccountCircle
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolsIcons
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolIcon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -107,8 +105,8 @@ fun MainScreen(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0 },
                         icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Home,
+                            MaterialSymbolIcon(
+                                icon = MaterialSymbolsIcons.Home, filled = false,
                                 contentDescription = "Dashboard",
                             )
                         },
@@ -118,8 +116,8 @@ fun MainScreen(
                         selected = selectedTab == 1,
                         onClick = { selectedTab = 1 },
                         icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Search,
+                            MaterialSymbolIcon(
+                                icon = MaterialSymbolsIcons.Search, filled = false,
                                 contentDescription = "Search",
                             )
                         },
@@ -129,8 +127,8 @@ fun MainScreen(
                         selected = selectedTab == 2,
                         onClick = { selectedTab = 2 },
                         icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.AccountCircle,
+                            MaterialSymbolIcon(
+                                icon = MaterialSymbolsIcons.AccountCircle, filled = false,
                                 contentDescription = "Profile",
                             )
                         },

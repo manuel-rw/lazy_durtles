@@ -19,12 +19,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.Refresh
+
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -47,6 +43,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolIcon
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolsIcons
 import com.lazy_durtles.wk.livedata.LiveApiProgress
 import com.lazy_durtles.wk.livedata.LiveTaskCounts
 import kotlinx.coroutines.delay
@@ -165,8 +163,8 @@ fun SyncButtonWithPopover(
                 }
             },
         ) {
-            Icon(
-                imageVector = Icons.Filled.Refresh,
+            MaterialSymbolIcon(
+                icon = MaterialSymbolsIcons.Refresh,
                 contentDescription = "Sync now",
                 tint = if (hasTasks) {
                     MaterialTheme.colorScheme.primary
@@ -285,8 +283,8 @@ private fun SyncProgressPopup(
                                     .background(MaterialTheme.colorScheme.primaryContainer),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Done,
+                                MaterialSymbolIcon(
+                                    icon = MaterialSymbolsIcons.Done,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                     modifier = Modifier.size(20.dp),
@@ -308,8 +306,8 @@ private fun SyncProgressPopup(
                     PopupHeader(
                         title = "No sync in progress",
                         icon = {
-                            Icon(
-                                imageVector = Icons.Filled.Refresh,
+                            MaterialSymbolIcon(
+                                icon = MaterialSymbolsIcons.Refresh,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(22.dp),
@@ -351,8 +349,8 @@ private fun PopupHeader(
             modifier = Modifier.weight(1f),
         )
         IconButton(onClick = onDismiss) {
-            Icon(
-                imageVector = Icons.Filled.Close,
+            MaterialSymbolIcon(
+                icon = MaterialSymbolsIcons.Close,
                 contentDescription = "Close",
                 modifier = Modifier.size(20.dp),
             )
@@ -372,8 +370,8 @@ private fun SpinningSyncIcon(modifier: Modifier = Modifier) {
         animationSpec = infiniteRepeatable(tween(durationMillis = 1000, easing = LinearEasing)),
         label = "angle",
     )
-    Icon(
-        imageVector = Icons.Filled.Refresh,
+    MaterialSymbolIcon(
+        icon = MaterialSymbolsIcons.Refresh,
         contentDescription = null,
         modifier = modifier
             .size(22.dp)

@@ -109,7 +109,8 @@ dependencies {
     implementation composeBom
     implementation "androidx.compose.material3:material3:1.4.0"
     implementation "androidx.compose.material:material:1.12.1"
-    implementation("androidx.compose.material:material-icons-extended")
+    // Material Symbols Rounded icon font (FontIcon composable)
+    implementation("dev.tclement.fonticons:core:2.2.0")
     implementation "androidx.compose.ui:ui:1.12.1"
     implementation "io.coil-kt:coil-compose:2.7.0"
     implementation "io.coil-kt:coil-svg:2.7.0"

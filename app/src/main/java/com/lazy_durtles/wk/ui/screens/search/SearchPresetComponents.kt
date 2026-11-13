@@ -7,13 +7,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolsIcons
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolIcon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -84,8 +84,8 @@ fun SearchPresetSection(
                 modifier = Modifier.heightIn(min = 48.dp),
             ) {
                 Text(selected.name)
-                Icon(
-                    imageVector = Icons.Filled.ArrowDropDown,
+                MaterialSymbolIcon(
+                    icon = MaterialSymbolsIcons.ArrowDropDown, filled = false,
                     contentDescription = "Choose preset",
                 )
             }
