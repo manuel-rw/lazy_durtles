@@ -9,3 +9,9 @@ plugins {
 tasks.register('clean', Delete) {
     delete rootProject.buildDir
 }
+
+// The daemon JVM (25) must be installed locally (CI installs it via
+// setup-java); do not generate download URLs when regenerating the criteria.
+tasks.named('updateDaemonJvm') {
+    toolchainPlatforms = []
+}

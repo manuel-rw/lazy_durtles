@@ -645,10 +645,10 @@ private fun UnansweredQuestionContent(
                 textAlign = if (centerCaret) TextAlign.Center else TextAlign.Start,
             ),
             keyboardOptions = KeyboardOptions(
-                keyboardType = if (forceAscii) KeyboardType.Ascii else KeyboardType.Text,
-                autoCorrect = autoCorrect,
                 capitalization = KeyboardCapitalization.None,
-                imeAction = ImeAction.Done,
+                autoCorrectEnabled = autoCorrect,
+                keyboardType = if (forceAscii) KeyboardType.Ascii else KeyboardType.Text,
+                imeAction = ImeAction.Done
             ),
             keyboardActions = KeyboardActions(onDone = { onSubmit() }),
             modifier = Modifier

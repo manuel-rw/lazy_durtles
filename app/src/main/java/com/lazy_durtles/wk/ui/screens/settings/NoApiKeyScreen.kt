@@ -39,6 +39,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
@@ -127,11 +128,7 @@ fun NoApiKeyScreen(
                     },
                 placeholder = { Text(text = "Your V2 API token") },
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Uri,
-                    autoCorrect = false,
-                    imeAction = ImeAction.Done,
-                ),
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Unspecified, autoCorrectEnabled = false, keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done,platformImeOptions = null, showKeyboardOnFocus = null,hintLocales = null),
                 keyboardActions = KeyboardActions(onDone = { save() }),
             )
 

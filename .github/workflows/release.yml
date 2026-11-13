@@ -23,7 +23,7 @@ jobs:
           fetch-depth: 0 # full history so semantic-release can analyze commits
           persist-credentials: true # semantic-release pushes the tag with these credentials
 
-      - name: Set up JDK 21
+      - name: Set up JDK 25
         uses: actions/setup-java@v6
         with:
           distribution: temurin
