@@ -2254,8 +2254,7 @@ private fun AboutRow(text: String, link: AboutSegment? = null) {
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.fillMaxWidth(),
             onClick = { offset ->
-                getAnnotatedString(ABOUT_URL_TAG)
-                    .getStringAnnotations(ABOUT_URL_TAG, offset, offset)
+                text.getStringAnnotations(ABOUT_URL_TAG, offset, offset)
                     .firstOrNull()
                     ?.let { uriHandler.openUri(it.item) }
             }
