@@ -2247,11 +2247,9 @@ private fun AboutRow(text: String, link: AboutSegment? = null) {
                 style = MaterialTheme.typography.bodyLarge.copy(
                     color = MaterialTheme.colorScheme.primary,
                 ),
-                modifier = Modifier.clickable(
-                    onClick = {
-                        LocalUriHandler.current.openUri(link.url)
-                    }
-                ),
+                modifier = Modifier.clickable(onClick = {
+                    LocalUriHandler.current.openUri(link.url)
+                }),
             )
         }
     }
