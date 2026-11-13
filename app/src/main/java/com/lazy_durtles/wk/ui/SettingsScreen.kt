@@ -2231,27 +2231,35 @@ private fun aboutParagraph(segments: List<AboutSegment>) {
  */
 @Composable
 private fun AboutRow(text: String, link: AboutSegment? = null) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    if (link == null) {
         Text(
             text = text,
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.fillMaxWidth()
         )
-        if (link != null) {
-            Text(
-                text = link.text,
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    color = MaterialTheme.colorScheme.primary,
-                ),
-                modifier = Modifier.clickable {
-                    link.url?.let { LocalUriHandler.current.openUri(it) }
-                },
-            )
-        }
+    } else {
+        val uriHandler = LocalUriHandler.current
+        val linkColor = MaterialTheme.colorScheme.primary
+
+        ClickableText(
+            text = buildAnnotatedString {
+                append(text)
+                pushStringAnnotation(ABOUT_URL_TAG, link.url)
+                withStyle(SpanStyle(color = linkColor)) {
+                    append(link.text)
+                }
+                pop()
+            },
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { offset ->
+                getAnnotatedString(ABOUT_URL_TAG)
+                    .getStringAnnotations(ABOUT_URL_TAG, offset, offset)
+                    .firstOrNull()
+                    ?.let { uriHandler.openUri(it.item) }
+            }
+        )
     }
 }
 
