@@ -122,6 +122,19 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0"
     implementation "androidx.lifecycle:lifecycle-runtime-compose:2.11.0"
     implementation "androidx.navigation:navigation-compose:2.10.2"
+
+    constraints {
+        // navigation-compose 2.10.2 pulls kotlinx-serialization-core 1.7.3, while
+        // room-migration 2.8.5 (androidTest) is compiled against 1.8.x. AGP's
+        // consistent resolution then locks the androidTest classpath to the main
+        // classpath's 1.7.3, and Room's schema bundle deserialization crashes with
+        // AbstractMethodError (GeneratedSerializer.typeParametersSerializers).
+        // Raise the main-classpath version so both resolve to 1.8.1.
+        implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.1") {
+            because "room-migration 2.8.5 needs kotlinx-serialization 1.8.x; navigation 2.10.2 pins 1.7.3"
+        }
+    }
+
     debugImplementation "androidx.compose.ui:ui-tooling:1.12.1"
 
     implementation 'junit:junit:4.13.2'
