@@ -2241,9 +2241,10 @@ private fun AboutRow(text: String, link: AboutSegment? = null) {
     } else {
         val uriHandler = LocalUriHandler.current
         val linkColor = MaterialTheme.colorScheme.primary
+
         val annotatedText = buildAnnotatedString {
             append(text)
-            pushStringAnnotation(ABOUT_URL_TAG, link.url)
+            pushStringAnnotation(ABOUT_URL_TAG, link.url!!)
             withStyle(SpanStyle(color = linkColor)) {
                 append(link.text)
             }
