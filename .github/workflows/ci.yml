@@ -19,11 +19,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          # With pull_request_target the default checkout is the base merge
-          # commit (needs the PR mergeable); the PR head is what we build.
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Set up JDK 21
+      - name: Set up JDK 25
         uses: actions/setup-java@v6
         with:
           distribution: temurin
@@ -53,11 +51,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          # With pull_request_target the default checkout is the base merge
-          # commit (needs the PR mergeable); the PR head is what we build.
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Set up JDK 21
+      - name: Set up JDK 25
         uses: actions/setup-java@v6
         with:
           distribution: temurin
