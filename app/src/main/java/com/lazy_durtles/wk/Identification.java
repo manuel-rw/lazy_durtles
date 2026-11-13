@@ -40,11 +40,6 @@ public final class Identification {
     public static final String AUTHOR_NAME = "manuel-rw";
 
     /**
-     * The email address of the author.
-     */
-    public static final String AUTHOR_EMAIL = "30572287+manuel-rw@users.noreply.github.com";
-
-    /**
      * The WaniKani username of the author.
      */
     public static final String AUTHOR_USERNAME = "manuel-rw";
