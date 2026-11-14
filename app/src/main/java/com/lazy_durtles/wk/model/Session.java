@@ -39,6 +39,7 @@ import com.lazy_durtles.wk.livedata.LiveSessionState;
 import com.lazy_durtles.wk.livedata.SubjectChangeListener;
 import com.lazy_durtles.wk.livedata.SubjectChangeWatcher;
 import com.lazy_durtles.wk.services.JobRunnerService;
+import com.lazy_durtles.wk.services.SessionNotificationHelper;
 import com.lazy_durtles.wk.util.AudioUtil;
 import com.lazy_durtles.wk.util.KanaUtil;
 import com.lazy_durtles.wk.util.Logger;
@@ -646,6 +647,7 @@ s     *
         setCurrentQuestion(null, QuestionChoiceReason.NEXT_NATURAL);
         currentItem = null;
         LOGGER.info("Advance: current question and item cleared. Questions size: " + questions.size());
+        SessionNotificationHelper.updateProgressNotification();
         LiveSessionProgress.getInstance().ping();
     }
 
@@ -674,6 +676,7 @@ s     *
         currentItem = null;
         setCurrentQuestion(null, QuestionChoiceReason.STARTING_QUIZ);
         lastFinishedSubjectId = -1;
+        SessionNotificationHelper.startProgressNotification();
         LiveSessionProgress.getInstance().ping();
         sessionLog.addEventStartQuiz();
     }
@@ -801,6 +804,7 @@ s     *
 
             FloatingUiState.showCloseToast = verdict.isNearMatch();
             FloatingUiState.toastPlayed = false;
+            SessionNotificationHelper.updateProgressNotification();
             LiveSessionProgress.getInstance().ping();
         }
         else if (!verdict.isRetry()) {
@@ -812,6 +816,7 @@ s     *
             FloatingUiState.showCloseToast = false;
             lastTypedIncorrectAnswer = System.currentTimeMillis();
             FloatingUiState.toastPlayed = false;
+            SessionNotificationHelper.updateProgressNotification();
             LiveSessionProgress.getInstance().ping();
         }
 
@@ -855,6 +860,7 @@ s     *
         FloatingUiState.lastVerdict = null;
         FloatingUiState.showCloseToast = false;
         LOGGER.info("Submit Anki correct: %s processed", currentQuestion);
+        SessionNotificationHelper.updateProgressNotification();
         LiveSessionProgress.getInstance().ping();
         sessionLog.addEventSubmitAnkiCorrect(currentQuestion);
     }
@@ -874,6 +880,7 @@ s     *
         FloatingUiState.lastVerdict = null;
         FloatingUiState.showCloseToast = false;
         LOGGER.info("Submit Anki incorrect: %s processed", currentQuestion);
+        SessionNotificationHelper.updateProgressNotification();
         LiveSessionProgress.getInstance().ping();
         sessionLog.addEventSubmitAnkiIncorrect(currentQuestion);
     }
@@ -895,6 +902,7 @@ s     *
         FloatingUiState.showCloseToast = false;
         FloatingUiState.toastPlayed = false;
         LOGGER.info("Submit Don't Know: %s processed", currentQuestion);
+        SessionNotificationHelper.updateProgressNotification();
         LiveSessionProgress.getInstance().ping();
         sessionLog.addEventSubmitDontKnow(currentQuestion);
     }
@@ -1233,6 +1241,9 @@ s     *
             loaded = true;
             LiveSessionState.getInstance().post(state);
         }
+        if (!isInactive()) {
+            SessionNotificationHelper.startProgressNotification();
+        }
         LiveSessionProgress.getInstance().ping();
     }
 
@@ -1251,6 +1262,7 @@ s     *
         currentItem = null;
         LiveSessionState.getInstance().post(state);
         JobRunnerService.schedule(FinishSessionJob.class, type.toString());
+        SessionNotificationHelper.stopProgressNotification();
         LiveSessionProgress.getInstance().ping();
     }
 
@@ -1264,6 +1276,7 @@ s     *
         sessionLog.clear();
         state = INACTIVE;
         LiveSessionState.getInstance().post(state);
+        SessionNotificationHelper.stopProgressNotification();
         LiveSessionProgress.getInstance().ping();
     }
 
@@ -1289,6 +1302,7 @@ s     *
             setCurrentQuestion(null, QuestionChoiceReason.WRAPUP);
         }
         checkQuestions();
+        SessionNotificationHelper.updateProgressNotification();
         LiveSessionProgress.getInstance().ping();
     }
 
@@ -1445,6 +1459,7 @@ s     *
         setCurrentQuestion(null, QuestionChoiceReason.STARTING_LESSON_SESSION);
         lastFinishedSubjectId = -1;
         LiveSessionState.getInstance().post(state);
+        SessionNotificationHelper.startProgressNotification();
         checkQuestions();
         LiveSessionProgress.getInstance().ping();
     }
@@ -1497,6 +1512,7 @@ s     *
         setCurrentQuestion(null, QuestionChoiceReason.STARTING_REVIEW_SESSION);
         lastFinishedSubjectId = -1;
         LiveSessionState.getInstance().post(state);
+        SessionNotificationHelper.startProgressNotification();
         checkQuestions();
         LiveSessionProgress.getInstance().ping();
     }
@@ -1549,6 +1565,7 @@ s     *
         setCurrentQuestion(null, QuestionChoiceReason.STARTING_SELF_STUDY_SESSION);
         lastFinishedSubjectId = -1;
         LiveSessionState.getInstance().post(state);
+        SessionNotificationHelper.startProgressNotification();
         checkQuestions();
         LiveSessionProgress.getInstance().ping();
     }
