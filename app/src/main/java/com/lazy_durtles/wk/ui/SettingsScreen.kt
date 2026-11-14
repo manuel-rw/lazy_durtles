@@ -162,6 +162,7 @@ fun SettingsCategoryScreen(
             modifier = modifier,
         )
         "theme_customization" -> ThemeCustomizationScreen(onBack = onBack)
+        "about" -> AboutCategoryScreen(onBack = onBack)
         else -> DefCategoryScreen(
             categoryId = categoryId,
             highlight = highlight,
@@ -474,10 +475,11 @@ private fun rememberSearchIndex(): List<SearchEntry> {
         val entries = mutableListOf<SearchEntry>()
         for (group in CATEGORY_GROUPS) {
             for (category in group.categories) {
+                val title = if (category.id == "api") apiCategoryTitle() else category.title
                 entries.add(
                     SearchEntry(
                         key = null,
-                        title = category.title,
+                        title = title,
                         summary = category.description,
                         breadcrumb = "Settings",
                         categoryId = category.id,
@@ -487,9 +489,9 @@ private fun rememberSearchIndex(): List<SearchEntry> {
                 for (defGroup in categoryDefs(category.id, context, { _, _ -> }, { }, { true })) {
                     for (def in defGroup.items) {
                         val breadcrumb = if (defGroup.header != null) {
-                            "${category.title} › ${defGroup.header}"
+                            "$title › ${defGroup.header}"
                         } else {
-                            category.title
+                            title
                         }
                         entries.add(
                             SearchEntry(
@@ -617,7 +619,10 @@ private fun CategoryRow(
         TonalIcon(category.icon)
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = category.title, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = if (category.id == "api") apiCategoryTitle() else category.title,
+                style = MaterialTheme.typography.bodyLarge,
+            )
             Text(
                 text = category.description,
                 style = MaterialTheme.typography.bodySmall,
@@ -692,6 +697,14 @@ private data class TextFieldDef(
     val prefKey: String,
     val default: String = "",
     val keyboardType: KeyboardType = KeyboardType.Text,
+    /**
+     * Optional custom accessor for values kept outside the shared prefs,
+     * e.g. the API token in the encrypted store. When set, it replaces the
+     * prefKey-based read.
+     */
+    val read: ((SharedPreferences) -> String)? = null,
+    /** Optional custom writer matching [read]; replaces the prefKey-based write. */
+    val write: ((String, SharedPreferences) -> Unit)? = null,
     override val visibleIf: (SharedPreferences) -> Boolean = { true },
 ) : SettingDef
 
@@ -761,10 +774,18 @@ private class SettingGroup(
 private fun group(header: String?, vararg items: SettingDef) = SettingGroup(header, items.toList())
 
 /**
+ * The title of the "api" category depends on the auth state: a login prompt
+ * while no token is configured, connection management otherwise.
+ */
+private fun apiCategoryTitle(): String =
+    if (GlobalSettings.Api.getApiKey().isNullOrEmpty()) "Login to WaniKani"
+    else "Manage WaniKani Connection"
+
+/**
  * The title of a declaratively rendered category screen.
  */
 private fun categoryTitle(categoryId: String): String = when (categoryId) {
-    "api" -> "Login to WaniKani"
+    "api" -> apiCategoryTitle()
     "audio" -> "Audio"
     "display" -> "Display"
     "dashboard" -> "Dashboard"
@@ -1096,7 +1117,8 @@ private fun SliderRowContent(def: SliderDef, prefs: SharedPreferences) {
 @Composable
 private fun TextFieldRowContent(def: TextFieldDef, prefs: SharedPreferences) {
     var editing by remember { mutableStateOf(false) }
-    val value = prefs.getString(def.prefKey, def.default) ?: def.default
+    val value = def.read?.invoke(prefs)
+        ?: (prefs.getString(def.prefKey, def.default) ?: def.default)
 
     Column(
         modifier = Modifier
@@ -1128,7 +1150,12 @@ private fun TextFieldRowContent(def: TextFieldDef, prefs: SharedPreferences) {
             },
             confirmButton = {
                 TextButton(onClick = {
-                    prefs.edit { putString(def.prefKey, text) }
+                    val write = def.write
+                    if (write != null) {
+                        write(text, prefs)
+                    } else {
+                        prefs.edit { putString(def.prefKey, text) }
+                    }
                     editing = false
                 }) { Text(text = "OK") }
             },
@@ -1446,11 +1473,20 @@ private fun apiSettingsGroups(apiStateOk: () -> Boolean): List<SettingGroup> {
             TextFieldDef(
                 key = "api_key", title = "V2 API token",
                 prefKey = "api_key",
+                read = { GlobalSettings.Api.getApiKey() ?: "" },
+                write = { value, _ ->
+                    GlobalSettings.Api.setApiKey(value)
+                    // Refresh the auth state so the caution notice and the
+                    // category title follow the new token immediately.
+                    LiveApiState.getInstance().update()
+                },
             ),
             TextFieldDef(
                 key = "web_password", title = "Web site password",
                 summary = "This is only needed for resurrect functionality. Leave blank if you don't need it.",
                 prefKey = "web_password",
+                read = { GlobalSettings.Api.getWebPassword() ?: "" },
+                write = { value, _ -> GlobalSettings.Api.setWebPassword(value) },
             ),
         ),
         group(
@@ -2863,6 +2899,28 @@ private fun aboutParagraph(segments: List<AboutSegment>) {
                 ?.let { uriHandler.openUri(it.item) }
         },
     )
+}
+
+/**
+ * The About category screen: the About page content in the shared category
+ * scaffold.
+ */
+@Composable
+private fun AboutCategoryScreen(onBack: () -> Unit) {
+    Scaffold(
+        topBar = {
+            SettingsTopBar(title = "About", onBack = onBack)
+        },
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState()),
+        ) {
+            AboutSettings()
+        }
+    }
 }
 
 /**

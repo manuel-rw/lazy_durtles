@@ -768,6 +768,15 @@ public final class GlobalSettings {
         public static @Nullable String getWebPassword() {
             return WkApplication.getEncryptedPreferenceDataStore().getString("web_password", null);
         }
+
+        /**
+         * The web password used to resurrect burned subjects.
+         *
+         * @param webPassword the value
+         */
+        public static void setWebPassword(final @Nullable String webPassword) {
+            WkApplication.getEncryptedPreferenceDataStore().putString("web_password", webPassword);
+        }
     }
 
     /**
