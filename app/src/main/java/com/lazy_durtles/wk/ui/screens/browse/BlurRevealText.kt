@@ -16,13 +16,14 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.lazy_durtles.wk.GlobalSettings
 
 /**
  * One context sentence's English translation, hidden behind a blur until
- * tapped when the "hide sentence translations" setting is enabled. Ported from
- * the legacy showContextSentence() blur-reveal behavior: the blur radius is a
- * third of the text size.
+ * tapped. Ported from the legacy showContextSentence() blur-reveal behavior:
+ * the blur radius is a third of the text size. The translation is always
+ * hidden by default because it gives away the answer.
  *
  * Modifier.blur() is a no-op below API 31, so older versions fall back to
  * rendering the text at very low alpha, which keeps the hidden-until-tapped
@@ -33,17 +34,15 @@ internal fun BlurRevealSentenceText(
     text: String,
     modifier: Modifier = Modifier,
 ) {
-    val hide = GlobalSettings.SubjectInfo.getHideSentenceTranslations()
-    var revealed by remember(text) { mutableStateOf(!hide) }
+    var revealed by remember(text) { mutableStateOf(false) }
     val density = LocalDensity.current
-    val blurRadius = with(density) {
-        (MaterialTheme.typography.bodyMedium.fontSize.toPx() / 3f).toDp()
-    }
+    val textSize = GlobalSettings.Font.getFontSizeSubjectInfo().sp
+    val blurRadius = with(density) { (textSize.toPx() / 3f).toDp() }
 
-    Box(modifier = modifier.clickable(enabled = hide && !revealed) {
+    Box(modifier = modifier.clickable(enabled = !revealed) {
         revealed = true
     }) {
-        val hidden = hide && !revealed
+        val hidden = !revealed
         val textModifier = when {
             hidden && Build.VERSION.SDK_INT >= 31 -> Modifier.blur(blurRadius, BlurredEdgeTreatment.Unbounded)
             hidden -> Modifier.alpha(0.15f)
@@ -54,6 +53,7 @@ internal fun BlurRevealSentenceText(
             modifier = textModifier,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = textSize,
         )
     }
 }

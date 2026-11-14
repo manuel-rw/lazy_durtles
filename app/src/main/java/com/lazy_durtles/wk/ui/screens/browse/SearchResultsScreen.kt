@@ -215,9 +215,6 @@ fun SearchResultsScreen(
         modifier = modifier.fillMaxSize(),
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            if (!GlobalSettings.Tutorials.getSearchResultDismissed()) {
-                SearchResultsTutorialCard()
-            }
             Text(
                 text = String.format(Locale.ROOT, "%s: %d subject(s) found", searchDescription, subjects.size),
                 style = MaterialTheme.typography.bodyMedium,
@@ -342,32 +339,6 @@ fun SearchResultsScreen(
             },
             onDismiss = { bulkOpType = null },
         )
-    }
-}
-
-/**
- * The first-run tutorial text from the legacy SearchResultFragment.
- */
-@Composable
-private fun SearchResultsTutorialCard(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.secondaryContainer)
-            .padding(8.dp),
-    ) {
-        Text(
-            text = "This screen shows the results from the search you chose before."
-                + " You can click on the various headers in the list to collapse/expand groups"
-                + " of subjects.\n"
-                + "Other actions such as refining your search, saving a preset or "
-                + "starting a self-study session can be accessed from the menu.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
-        )
-        TextButton(onClick = { GlobalSettings.Tutorials.setSearchResultDismissed(true) }) {
-            Text("Dismiss")
-        }
     }
 }
 
@@ -667,11 +638,14 @@ private fun SubjectResultRow(
                 .background(Color(subject.getButtonBackgroundColor())),
             contentAlignment = Alignment.Center,
         ) {
+            // Long character strings (e.g. kana vocabulary) shrink to fit.
+            val characters = subject.getCharacters() ?: subject.getSlug() ?: ""
             Text(
-                text = subject.getCharacters() ?: subject.getSlug() ?: "",
+                text = characters,
                 color = Color.White,
-                fontSize = 22.sp,
+                fontSize = if (characters.length <= 2) 22.sp else 14.sp,
                 textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 2.dp),
             )
         }
         Column(modifier = Modifier.padding(start = 16.dp)) {
