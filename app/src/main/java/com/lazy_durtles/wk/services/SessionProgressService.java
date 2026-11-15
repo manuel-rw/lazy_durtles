@@ -16,6 +16,7 @@
 
 package com.lazy_durtles.wk.services;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -168,6 +169,7 @@ public final class SessionProgressService extends Service {
      * Refresh the notification from the current session state. Call this
      * whenever the session progress changes.
      */
+    @SuppressLint("MissingPermission") // guarded by hasNotificationPermission()
     public void updateNotification(final Session session) {
         if (!hasNotificationPermission()) {
             return;
