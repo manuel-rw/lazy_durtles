@@ -1,4 +1,6 @@
-# Lazy Durtles
+<img src="/assets/hero.png" alt="Lazy Durtles hero image: the app name in bold white text on a violet background with a 3D-tilted phone showing the app dashboard" width="800" align="center" />
+
+<br/>
 
 Lazy Durtles is an Android app for [WaniKani](https://www.wanikani.com/), the kanji learning platform by Tofugu. It is a fork of [Smouldering Durtles](https://github.com/jerryhcooke/smouldering_durtles), which in turn is a fork of [Flaming Durtles](https://github.com/ejplugge/com.the_tinkering.wk).
 
@@ -12,6 +14,18 @@ Download the latest APK from the [Releases Section](https://github.com/manuel-rw
 - Elegant onboarding
 - Modern design with Material Expressive 3
 - Background sync of lessons and reviews
+
+## Showcase
+
+<p align="center">
+  <img src="assets/showcase/dashboard-dark.png" alt="Dashboard in dark theme with lessons, reviews and the reviews forecast" width="260">
+  &nbsp;
+  <img src="assets/showcase/session-reading-question.png" alt="Vocabulary reading question during a review session" width="260">
+  &nbsp;
+  <img src="assets/showcase/profile-dark.png" alt="Profile screen with account stats and accuracy" width="260">
+  &nbsp;
+  <img src="assets/showcase/settings-dark.png" alt="Settings screen in dark theme" width="260">
+</p>
 
 ## Credits
 
