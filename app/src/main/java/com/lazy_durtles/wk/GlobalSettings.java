@@ -35,6 +35,7 @@ import com.lazy_durtles.wk.settings.DisplaySettings;
 import com.lazy_durtles.wk.settings.FontSettings;
 import com.lazy_durtles.wk.settings.KeyboardSettings;
 import com.lazy_durtles.wk.settings.MnemonicImageSettings;
+import com.lazy_durtles.wk.settings.OnboardingSettings;
 import com.lazy_durtles.wk.settings.OtherSettings;
 import com.lazy_durtles.wk.settings.ReviewSettings;
 import com.lazy_durtles.wk.settings.SettingsPrefs;
@@ -105,6 +106,7 @@ public final class GlobalSettings {
     public static final class AdvancedOther extends AdvancedOtherSettings {}
     public static final class UiConfirmations extends UiConfirmationsSettings {}
     public static final class Tutorials extends TutorialsSettings {}
+    public static final class Onboarding extends OnboardingSettings {}
 
     // -----------------------------------------------------------------------
     // Top-level settings

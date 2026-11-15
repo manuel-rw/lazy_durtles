@@ -9,16 +9,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.lazy_durtles.wk.GlobalSettings
 import com.lazy_durtles.wk.api.ApiState
 import com.lazy_durtles.wk.enums.SessionState
 import com.lazy_durtles.wk.enums.SubjectType
-import com.lazy_durtles.wk.jobs.StartMnemonicImageDownloadJob
 import com.lazy_durtles.wk.livedata.LiveApiProgress
 import com.lazy_durtles.wk.livedata.LiveBurnedItems
 import com.lazy_durtles.wk.livedata.LiveCriticalCondition
@@ -31,7 +27,6 @@ import com.lazy_durtles.wk.livedata.LiveRecentUnlocks
 import com.lazy_durtles.wk.livedata.LiveSrsBreakDown
 import com.lazy_durtles.wk.livedata.LiveSessionState
 import com.lazy_durtles.wk.livedata.LiveTaskCounts
-import com.lazy_durtles.wk.services.JobRunnerService
 import com.lazy_durtles.wk.livedata.LiveTimeLine
 import com.lazy_durtles.wk.livedata.LiveVacationMode
 
@@ -48,7 +43,6 @@ fun DashboardScreen(
     onResumeSession: () -> Unit,
     onGoToSettings: () -> Unit,
     onRetryApiError: () -> Unit,
-    onViewKeyboardHelp: () -> Unit,
     onSrsBucketClick: (bucket: Int) -> Unit,
     onLevelProgressEntryClick: (level: Int, type: SubjectType) -> Unit,
     onSubjectClick: (subjectId: Long, allIds: LongArray) -> Unit,
@@ -80,9 +74,6 @@ fun DashboardScreen(
 
     val firstTimeSetup = GlobalSettings.getFirstTimeSetup()
     val userLevel = levelDuration.value?.level ?: 0
-    val keyboardHelpDismissed = remember {
-        mutableStateOf(GlobalSettings.Tutorials.getKeyboardHelpDismissed())
-    }
 
     Column(modifier = modifier.fillMaxWidth()) {
         Column(
@@ -99,37 +90,10 @@ fun DashboardScreen(
                 onOpenSettings = onGoToSettings,
             )
 
-            if (!keyboardHelpDismissed.value) {
-                KeyboardHelpBanner(
-                    onView = onViewKeyboardHelp,
-                    onDismiss = {
-                        GlobalSettings.Tutorials.setKeyboardHelpDismissed(true)
-                        keyboardHelpDismissed.value = true
-                    },
-                )
-            }
-
             if (firstTimeSetup == 0) {
                 FirstTimeSetupText()
             }
             else {
-                // One-time onboarding prompt for the optional mnemonic image data pack.
-                if (!GlobalSettings.MnemonicImages.getOnboardingAsked()
-                    && !GlobalSettings.MnemonicImages.getEnabled()
-                ) {
-                    MnemonicImagesOnboardingBanner(
-                        onDownload = {
-                            GlobalSettings.MnemonicImages.setOnboardingAsked(true)
-                            GlobalSettings.MnemonicImages.setEnabled(true)
-                            // Room access must not happen on the main thread; the job does it.
-                            JobRunnerService.schedule(StartMnemonicImageDownloadJob::class.java, "")
-                        },
-                        onDismiss = {
-                            GlobalSettings.MnemonicImages.setOnboardingAsked(true)
-                        },
-                    )
-                }
-
                 levelDuration.value?.let { duration ->
                     DashboardHeader(
                         level = duration.level,

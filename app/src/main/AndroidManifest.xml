@@ -69,6 +69,13 @@
             <meta-data android:name="android.app.searchable" android:resource="@xml/searchable"/>
         </activity>
 
+        <activity android:name=".activities.OnboardingActivity"
+            android:label="@string/applabel"
+            android:exported="false"
+            android:theme="@style/WKSplash"
+            android:windowSoftInputMode="adjustResize"
+            tools:ignore="RedundantLabel"/>
+
         <service android:name=".services.JobRunnerService"
             android:permission="android.permission.BIND_JOB_SERVICE"/>
         <service android:name=".services.ApiTaskService"

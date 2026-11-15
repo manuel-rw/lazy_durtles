@@ -145,6 +145,18 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // First-run onboarding runs in its own activity before the overview.
+        // Users upgrading from a version without onboarding already have an
+        // API key; treat them as onboarded so they are not asked again.
+        if (!GlobalSettings.Onboarding.getCompleted()) {
+            if (GlobalSettings.Api.getApiKey() != null) {
+                GlobalSettings.Onboarding.setCompleted(true)
+            } else {
+                startActivity(Intent(this, OnboardingActivity::class.java))
+                finish()
+                return
+            }
+        }
         creationTheme = ActiveTheme.getCurrentTheme()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             notificationPermissionLauncher = registerForActivityResult(
@@ -517,7 +529,6 @@ private fun MainApplicationContent(
                 onGoToSettings = { push(Screen.Settings) },
                 onViewSessionLog = { push(Screen.SessionLog) },
                 onRetryApiError = activity::retryApiError,
-                onViewKeyboardHelp = { push(Screen.SettingsCategory("keyboard_help")) },
                 onSyncNow = activity::syncNow,
                 onSrsBucketClick = { bucket ->
                     push(

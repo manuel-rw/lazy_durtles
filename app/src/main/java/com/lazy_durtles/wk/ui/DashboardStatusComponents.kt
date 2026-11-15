@@ -80,35 +80,6 @@ fun ApiStatusBanner(
 }
 
 /**
- * Banner shown when the keyboard help has not been dismissed yet.
- */
-@Composable
-fun KeyboardHelpBanner(
-    onView: () -> Unit,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier.padding(8.dp),
-    ) {
-        Text(
-            text = "Please take a moment to review some hints for your keyboard settings",
-            modifier = Modifier.weight(1f),
-        )
-        TextButton(
-            onClick = onView,
-        ) {
-            Text("View")
-        }
-        TextButton(
-            onClick = onDismiss,
-        ) {
-            Text("Dismiss")
-        }
-    }
-}
-
-/**
  * Text shown while the app performs its first-time setup.
  */
 @Composable
@@ -119,45 +90,6 @@ fun FirstTimeSetupText(
         text = "Please wait while we prepare the app for your account. This may take a minute or more...",
         modifier = modifier,
     )
-}
-
-/**
- * Onboarding prompt for the optional WaniKani mnemonic image data pack, shown
- * once on the dashboard after first-time setup has completed. The drawings are
- * copyright WaniKani / Tofugu, not the author of this app.
- */
-@Composable
-fun MnemonicImagesOnboardingBanner(
-    onDownload: () -> Unit,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = "Download WaniKani's mnemonic background images to show them in sessions?",
-                modifier = Modifier.weight(1f),
-            )
-            TextButton(
-                onClick = onDownload,
-            ) {
-                Text("Download")
-            }
-            TextButton(
-                onClick = onDismiss,
-            ) {
-                Text("Not now")
-            }
-        }
-        Text(
-            text = "Drawings are copyright WaniKani / Tofugu, not the author of this app.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
 }
 
 /**
