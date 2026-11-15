@@ -1,0 +1,10 @@
+[    1248ms] [INFO] [FrontChat][Front] SDK Version: 9.74.21 @ https://chat-assets.frontapp.com/v1/chat.bundle.js:2
+[    1255ms] [ERROR] Error: [FrontChat] Have not finished setting up FrontChatApp
+    at w (https://chat-assets.frontapp.com/v1/chat.bundle.js:2:26364)
+    at g (https://chat-assets.frontapp.com/v1/chat.bundle.js:2:26180)
+    at window.FrontChat (https://chat-assets.frontapp.com/v1/chat.bundle.js:2:25650)
+    at script.onload (https://www.wanikani.com/:396:18) @ https://chat-assets.frontapp.com/v1/chat.bundle.js:2
+[    1797ms] [ERROR] [bugsnag] Session failed to send… Error: Request failed with status 0
+    at i.onreadystatechange (https://chat-assets.frontapp.com/v1/app.bundle.js?v=6b0b3d84:2:29106) @ https://chat-assets.frontapp.com/v1/app.bundle.js?v=6b0b3d84:2
+[    1797ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ https://sessions.bugsnag.com/:1
+[    2324ms] [INFO] [FrontChat][Front] FrontChat Version: 9.74.21 @ https://chat-assets.frontapp.com/v1/app.bundle.js?v=6b0b3d84:2

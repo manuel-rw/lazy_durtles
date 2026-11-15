@@ -89,8 +89,11 @@ import com.lazy_durtles.wk.GlobalSettings
 import com.lazy_durtles.wk.Identification
 import com.lazy_durtles.wk.R
 import com.lazy_durtles.wk.api.ApiState
+import com.lazy_durtles.wk.jobs.CancelMnemonicImageDownloadJob
+import com.lazy_durtles.wk.jobs.DeleteAllMnemonicImagesJob
 import com.lazy_durtles.wk.jobs.FlushTasksJob
 import com.lazy_durtles.wk.jobs.ResetDatabaseJob
+import com.lazy_durtles.wk.jobs.StartMnemonicImageDownloadJob
 import com.lazy_durtles.wk.livedata.LiveApiState
 import com.lazy_durtles.wk.services.JobRunnerService
 import com.lazy_durtles.wk.ui.icons.MaterialSymbolIcon
@@ -667,6 +670,74 @@ internal fun subjectInfoSettingsGroups(): List<SettingGroup> {
                 read = { it.getInt("stroke_order_size", 250) },
                 write = { v, p -> setPrefInt(v, "stroke_order_size", p) },
                 visibleIf = strokeOrderVisible,
+            ),
+        ),
+    )
+}
+
+/**
+ * Mnemonic images: the optional data pack of WaniKani's hand-drawn mnemonic
+ * background drawings. Kept in its own category because it involves a
+ * separate download and local storage management.
+ */
+internal fun mnemonicImagesSettingsGroups(context: Context): List<SettingGroup> {
+    val mnemonicImagesEnabled: (SharedPreferences) -> Boolean = {
+        it.getBoolean("mnemonic_images_enabled", false)
+    }
+    return listOf(
+        group(
+            "Mnemonic images (optional data pack)",
+            ProgressDef(
+                key = "mnemonic_download_progress",
+                title = "Downloading mnemonic images",
+                visibleIf = mnemonicImagesEnabled,
+            ),
+            StatusDef(
+                key = "mnemonic_image_count",
+                title = "Downloaded mnemonic images",
+                visibleIf = mnemonicImagesEnabled,
+            ),
+            SwitchDef(
+                key = "mnemonic_images_enabled",
+                title = "Show WaniKani mnemonic background drawings",
+                summary = "Downloads and shows the hand-drawn mnemonic images in sessions. " +
+                    "The drawings are copyright WaniKani / Tofugu, not the author of this app.",
+                prefKey = "mnemonic_images_enabled",
+                onToggled = { enabled ->
+                    // Room access must not happen on the main thread; the jobs do it.
+                    if (enabled) {
+                        JobRunnerService.schedule(StartMnemonicImageDownloadJob::class.java, "")
+                    } else {
+                        JobRunnerService.schedule(CancelMnemonicImageDownloadJob::class.java, "")
+                    }
+                },
+            ),
+            ActionDef(
+                key = "download_mnemonic_images_action",
+                title = "Download mnemonic images now",
+                summary = "Fetch the optional data pack of WaniKani mnemonic drawings",
+                visibleIf = mnemonicImagesEnabled,
+                onClick = {
+                    JobRunnerService.schedule(StartMnemonicImageDownloadJob::class.java, "")
+                    Toast.makeText(context, "Mnemonic image download started", Toast.LENGTH_LONG).show()
+                },
+            ),
+            ActionDef(
+                key = "delete_mnemonic_images_action",
+                title = "Delete all downloaded mnemonic images",
+                summary = "Removes the locally stored WaniKani drawings from this device",
+                visibleIf = mnemonicImagesEnabled,
+                confirm = ConfirmSpec(
+                    title = "Delete mnemonic images?",
+                    text = "This deletes all locally downloaded WaniKani mnemonic drawings from this device. " +
+                        "You can download them again later.",
+                    destructive = true,
+                ),
+                onConfirmed = {
+                    JobRunnerService.schedule(CancelMnemonicImageDownloadJob::class.java, "")
+                    JobRunnerService.schedule(DeleteAllMnemonicImagesJob::class.java, "")
+                    Toast.makeText(context, "Mnemonic images deleted", Toast.LENGTH_LONG).show()
+                },
             ),
         ),
     )

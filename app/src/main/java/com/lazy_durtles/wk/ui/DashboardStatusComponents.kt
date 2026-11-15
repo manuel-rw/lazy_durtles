@@ -122,6 +122,45 @@ fun FirstTimeSetupText(
 }
 
 /**
+ * Onboarding prompt for the optional WaniKani mnemonic image data pack, shown
+ * once on the dashboard after first-time setup has completed. The drawings are
+ * copyright WaniKani / Tofugu, not the author of this app.
+ */
+@Composable
+fun MnemonicImagesOnboardingBanner(
+    onDownload: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "Download WaniKani's mnemonic background images to show them in sessions?",
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(
+                onClick = onDownload,
+            ) {
+                Text("Download")
+            }
+            TextButton(
+                onClick = onDismiss,
+            ) {
+                Text("Not now")
+            }
+        }
+        Text(
+            text = "Drawings are copyright WaniKani / Tofugu, not the author of this app.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/**
  * Dashboard header: a large "Welcome back" headline, a "★ Level N" pill and
  * the number of days spent on the current level. The username is kept for
  * TalkBack only, matching the mockup's plain headline.

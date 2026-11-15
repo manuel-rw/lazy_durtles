@@ -142,6 +142,8 @@ internal data class SwitchDef(
     /** If set, turning the switch ON first asks for confirmation. */
     val confirmTitle: String? = null,
     val confirmHtml: String? = null,
+    /** Optional side effect executed after the pref value changes. */
+    val onToggled: ((Boolean) -> Unit)? = null,
     override val visibleIf: (SharedPreferences) -> Boolean = { true },
 ) : SettingDef
 
@@ -208,6 +210,30 @@ internal data class InfoDef(
     override val visibleIf: (SharedPreferences) -> Boolean = { true },
 ) : SettingDef
 
+/**
+ * A non-interactive progress row showing the download progress of the
+ * optional mnemonic image data pack. Rendered from [LiveMnemonicDownloadProgress]
+ * and [LiveMnemonicImageDownloadQueued]; only visible while a download is
+ * queued or running.
+ */
+internal data class ProgressDef(
+    override val key: String = "mnemonic_download_progress",
+    override val title: String = "Downloading mnemonic images",
+    override val summary: String = "",
+    override val visibleIf: (SharedPreferences) -> Boolean = { true },
+) : SettingDef
+
+/**
+ * A non-interactive status row showing how many mnemonic images are stored
+ * locally. Rendered from [LiveMnemonicImageFileCount].
+ */
+internal data class StatusDef(
+    override val key: String = "mnemonic_image_count",
+    override val title: String = "Downloaded mnemonic images",
+    override val summary: String = "",
+    override val visibleIf: (SharedPreferences) -> Boolean = { true },
+) : SettingDef
+
 internal data class NumberRangeDef(
     override val key: String,
     override val title: String,
@@ -269,6 +295,7 @@ internal fun categoryTitle(categoryId: String): String = when (categoryId) {
     "dashboard" -> "Dashboard"
     "lesson_review", "advanced" -> "Lessons and reviews"
     "subject_info" -> "Subject info"
+    "mnemonic_images" -> "Mnemonic images"
     "keyboard" -> "Keyboard input"
     "font" -> "Fonts"
     "other" -> "Notifications and more"
@@ -297,6 +324,7 @@ internal fun categoryDefs(
     "dashboard" -> dashboardSettingsGroups()
     "lesson_review", "advanced" -> lessonReviewSettingsGroups(onOpenCategory)
     "subject_info" -> subjectInfoSettingsGroups()
+    "mnemonic_images" -> mnemonicImagesSettingsGroups(context)
     "keyboard" -> keyboardSettingsGroups(onOpenCategory)
     "font" -> fontSettingsGroups(onOpenCategory)
     "other" -> otherSettingsGroups(context)

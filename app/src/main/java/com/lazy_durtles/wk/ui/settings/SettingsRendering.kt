@@ -37,6 +37,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -59,11 +60,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.livedata.observeAsState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
@@ -92,6 +96,9 @@ import com.lazy_durtles.wk.api.ApiState
 import com.lazy_durtles.wk.jobs.FlushTasksJob
 import com.lazy_durtles.wk.jobs.ResetDatabaseJob
 import com.lazy_durtles.wk.livedata.LiveApiState
+import com.lazy_durtles.wk.livedata.LiveMnemonicDownloadProgress
+import com.lazy_durtles.wk.livedata.LiveMnemonicImageDownloadQueued
+import com.lazy_durtles.wk.livedata.LiveMnemonicImageFileCount
 import com.lazy_durtles.wk.services.JobRunnerService
 import com.lazy_durtles.wk.ui.icons.MaterialSymbolIcon
 import com.lazy_durtles.wk.ui.icons.MaterialSymbolsIcons
@@ -252,6 +259,8 @@ internal fun SettingRow(
             is TextFieldDef -> TextFieldRowContent(def, prefs)
             is ActionDef -> ActionRowContent(def)
             is InfoDef -> InfoRowContent(def)
+            is ProgressDef -> ProgressRowContent(def)
+            is StatusDef -> StatusRowContent(def)
             is NumberRangeDef -> NumberRangeRowContent(def, prefs)
             is SearchEngineDef -> SearchEngineRowContent(def, prefs)
         }
@@ -273,7 +282,9 @@ internal fun SwitchRowContent(def: SwitchDef, prefs: SharedPreferences) {
                 if (!checked && def.confirmTitle != null) {
                     confirmEnable = true
                 } else {
-                    prefs.edit { putBoolean(def.prefKey, !checked) }
+                    val newValue = !checked
+                    prefs.edit { putBoolean(def.prefKey, newValue) }
+                    def.onToggled?.invoke(newValue)
                 }
             }
             .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -296,6 +307,7 @@ internal fun SwitchRowContent(def: SwitchDef, prefs: SharedPreferences) {
                     confirmEnable = true
                 } else {
                     prefs.edit { putBoolean(def.prefKey, newValue) }
+                    def.onToggled?.invoke(newValue)
                 }
             },
         )
@@ -311,6 +323,7 @@ internal fun SwitchRowContent(def: SwitchDef, prefs: SharedPreferences) {
             onConfirm = {
                 confirmEnable = false
                 prefs.edit { putBoolean(def.prefKey, true) }
+                def.onToggled?.invoke(true)
             },
             onDismiss = { confirmEnable = false },
         )
@@ -531,6 +544,84 @@ internal fun InfoRowContent(def: InfoDef) {
 }
 
 /**
+ * A non-interactive progress row for the mnemonic image download. Shows an
+ * indeterminate bar while preparing and a determinate bar with "done / total"
+ * while downloading. Hidden when no download is queued or running.
+ */
+@Composable
+internal fun ProgressRowContent(def: ProgressDef) {
+    val queued by LiveMnemonicImageDownloadQueued.getInstance().observeAsState(initial = 0)
+    val progress by LiveMnemonicDownloadProgress.getInstance().observeAsState()
+    if (queued <= 0 && progress == null) {
+        return
+    }
+    val p = progress
+    val fraction = if (p != null && !p.indeterminate && p.total > 0) {
+        p.done.toFloat() / p.total.toFloat()
+    } else {
+        0f
+    }
+    val label = if (p == null || p.indeterminate) {
+        "Preparing download..."
+    } else {
+        String.format(Locale.ROOT, "%d / %d images", p.done, p.total)
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(text = def.title, style = MaterialTheme.typography.bodyLarge)
+        if (p == null || p.indeterminate) {
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp),
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                strokeCap = StrokeCap.Round,
+            )
+        } else {
+            LinearProgressIndicator(
+                progress = { fraction },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp),
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                strokeCap = StrokeCap.Round,
+            )
+        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/**
+ * A non-interactive status row showing the number of mnemonic image files
+ * currently stored on this device.
+ */
+@Composable
+internal fun StatusRowContent(def: StatusDef) {
+    val count by LiveMnemonicImageFileCount.getInstance().observeAsState(initial = null)
+    val c = count ?: LiveMnemonicImageFileCount.getInstance().get()
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+    ) {
+        Text(text = def.title, style = MaterialTheme.typography.bodyLarge)
+        Text(
+            text = String.format(Locale.ROOT, "%d images stored on this device", c),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/**
  * A subject-selection range: a minimum and maximum value, each of which may be
  * empty. -1 means "not constrained". A port of the legacy NumberRangePreference.
  */
@@ -708,6 +799,16 @@ internal fun DefCategoryScreen(
 ) {
     val context = LocalContext.current
     val apiState by LiveApiState.getInstance().observeAsState(initial = ApiState.UNKNOWN)
+
+    // Keep the locally downloaded mnemonic image count fresh while this screen
+    // is open; the count lives on disk, not in the database.
+    LaunchedEffect(categoryId) {
+        if (categoryId == "mnemonic_images") {
+            withContext(Dispatchers.IO) {
+                LiveMnemonicImageFileCount.getInstance().update()
+            }
+        }
+    }
 
     val groups = categoryDefs(
         categoryId = categoryId,

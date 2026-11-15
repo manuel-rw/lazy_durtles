@@ -249,6 +249,11 @@ internal val CATEGORY_GROUPS = listOf(
                 MaterialSymbolsIcons.MenuBook,
             ),
             SettingsCategory(
+                "mnemonic_images", "Mnemonic images",
+                "Optional WaniKani mnemonic background drawings",
+                MaterialSymbolsIcons.Brush,
+            ),
+            SettingsCategory(
                 "keyboard", "Keyboard input",
                 "Input method related settings",
                 MaterialSymbolsIcons.Keyboard,

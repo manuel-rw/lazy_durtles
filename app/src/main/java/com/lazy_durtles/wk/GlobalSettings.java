@@ -34,6 +34,7 @@ import com.lazy_durtles.wk.settings.DashboardSettings;
 import com.lazy_durtles.wk.settings.DisplaySettings;
 import com.lazy_durtles.wk.settings.FontSettings;
 import com.lazy_durtles.wk.settings.KeyboardSettings;
+import com.lazy_durtles.wk.settings.MnemonicImageSettings;
 import com.lazy_durtles.wk.settings.OtherSettings;
 import com.lazy_durtles.wk.settings.ReviewSettings;
 import com.lazy_durtles.wk.settings.SettingsPrefs;
@@ -91,6 +92,7 @@ public final class GlobalSettings {
     public static final class Display extends DisplaySettings {}
     public static final class Dashboard extends DashboardSettings {}
     public static final class SubjectInfo extends SubjectInfoSettings {}
+    public static final class MnemonicImages extends MnemonicImageSettings {}
     public static final class Audio extends AudioSettings {}
     public static final class Review extends ReviewSettings {}
     public static final class Keyboard extends KeyboardSettings {}

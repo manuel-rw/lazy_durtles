@@ -18,6 +18,7 @@ import com.lazy_durtles.wk.GlobalSettings
 import com.lazy_durtles.wk.api.ApiState
 import com.lazy_durtles.wk.enums.SessionState
 import com.lazy_durtles.wk.enums.SubjectType
+import com.lazy_durtles.wk.jobs.StartMnemonicImageDownloadJob
 import com.lazy_durtles.wk.livedata.LiveApiProgress
 import com.lazy_durtles.wk.livedata.LiveBurnedItems
 import com.lazy_durtles.wk.livedata.LiveCriticalCondition
@@ -30,6 +31,7 @@ import com.lazy_durtles.wk.livedata.LiveRecentUnlocks
 import com.lazy_durtles.wk.livedata.LiveSrsBreakDown
 import com.lazy_durtles.wk.livedata.LiveSessionState
 import com.lazy_durtles.wk.livedata.LiveTaskCounts
+import com.lazy_durtles.wk.services.JobRunnerService
 import com.lazy_durtles.wk.livedata.LiveTimeLine
 import com.lazy_durtles.wk.livedata.LiveVacationMode
 
@@ -111,6 +113,23 @@ fun DashboardScreen(
                 FirstTimeSetupText()
             }
             else {
+                // One-time onboarding prompt for the optional mnemonic image data pack.
+                if (!GlobalSettings.MnemonicImages.getOnboardingAsked()
+                    && !GlobalSettings.MnemonicImages.getEnabled()
+                ) {
+                    MnemonicImagesOnboardingBanner(
+                        onDownload = {
+                            GlobalSettings.MnemonicImages.setOnboardingAsked(true)
+                            GlobalSettings.MnemonicImages.setEnabled(true)
+                            // Room access must not happen on the main thread; the job does it.
+                            JobRunnerService.schedule(StartMnemonicImageDownloadJob::class.java, "")
+                        },
+                        onDismiss = {
+                            GlobalSettings.MnemonicImages.setOnboardingAsked(true)
+                        },
+                    )
+                }
+
                 levelDuration.value?.let { duration ->
                     DashboardHeader(
                         level = duration.level,

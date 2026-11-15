@@ -1,0 +1,105 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - list [ref=e4]:
+      - listitem [ref=e5]:
+        - link [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img "WaniKani logo" [ref=e7]
+      - listitem [ref=e8]:
+        - link "Success Stories" [ref=e9] [cursor=pointer]:
+          - /url: "#testimonials"
+      - listitem [ref=e10]:
+        - link "Our Method" [ref=e11] [cursor=pointer]:
+          - /url: "#explanation"
+      - listitem [ref=e12]:
+        - link "Sign In" [ref=e13] [cursor=pointer]:
+          - /url: /login
+      - listitem [ref=e14]:
+        - link "Join Us" [ref=e15] [cursor=pointer]:
+          - /url: /signup
+  - generic [ref=e19]:
+    - heading "2,000 kanji. 6,000 vocabulary words. In just over a year." [level=1] [ref=e20]
+    - list [ref=e21]:
+      - listitem [ref=e22]:
+        - link "Learn more" [ref=e23] [cursor=pointer]:
+          - /url: "#explanation"
+      - listitem [ref=e24]:
+        - button "Chat with us" [ref=e25] [cursor=pointer]
+  - generic [ref=e28]:
+    - heading "From Japanese residents to self learners, our members learn to read Japanese quickly" [level=2] [ref=e29]
+    - list [ref=e30]:
+      - listitem [ref=e31]:
+        - generic [ref=e34]:
+          - paragraph [ref=e35]: I first studied Japanese in college, and although I was pretty good at grammar, kanji was my weak point. I stayed up all night cramming before the final, and forgot all the kanji again right after I took it. WaniKani teaches kanji with mnemonics to help remember and make sense of them, and reinforces the lessons with periodic reviews to make sure they stick. And knowing kanji helped me to make the jump from reading textbooks to reading native material — the books, video games, and manga I’d always wanted to read.
+          - generic [ref=e36]:
+            - generic [ref=e37]: Andrew Eliot, Self-learner
+            - generic [ref=e38]: Boston, MA USA
+      - listitem [ref=e39]:
+        - generic [ref=e42]:
+          - paragraph [ref=e43]: My job requires me to work with a number of Japanese companies. Reports in English usually lag a day or so behind, whereas Japanese ones are available instantly. I once tried to read the Japanese reports and was put off by how many kanji I could not read. I didn’t think I could ever learn that much with my tight schedule. After using WaniKani for about a year, I tried to read those reports again. I was amazed by how much I could understand, and my boss is now very keen on sending me to the Tokyo office to further my career.
+          - generic [ref=e44]:
+            - generic [ref=e45]: Izzat Yuu, Future Japanese Resident
+            - generic [ref=e46]: Kuala Lumpur, Malaysia
+      - listitem [ref=e47]:
+        - generic [ref=e50]:
+          - paragraph [ref=e51]: I started learning Japanese about a year ago. I was learning kanji and vocabulary through my Japanese textbooks, but very little stuck. Memorizing the kanji felt like an impossible task and I was close to giving up. Then I started WaniKani, which made learning kanji simple and actually fun. The SRS and leveling structure made sure I never accidentally overwhelmed myself. The mnemonics ensured that every kanji and vocabulary would stick in my memory. After a year, I can now read over 1,000 kanji. I can navigate Japanese websites with comfort. I can read some of my favorite manga and actually enjoy it. Most importantly, at least in my opinion, I can put more focus into trying to learn Japanese grammar, knowing that WaniKani has me covered when it comes to kanji.
+          - generic [ref=e52]:
+            - generic [ref=e53]: Shagun Agrawal, Self-learner
+            - generic [ref=e54]: California, USA
+      - listitem [ref=e55]:
+        - generic [ref=e58]:
+          - paragraph [ref=e59]: I’ve lived in Japan for eight years and never managed to learn much Japanese. As a result, I’ve often felt embarrassed by my progress. Earlier this year I joined WaniKani and decided to get serious. I started on January 2nd and have studied every day since then, either reviewing or learning something new. The confidence I’ve gained has helped me to put myself out there and use Japanese in my everyday life. I would ask my wife before going somewhere that involved Japanese. Now I can just do it on my own.
+          - generic [ref=e60]:
+            - generic [ref=e61]: Brian Neale, Japan Resident
+            - generic [ref=e62]: Japan
+  - generic [ref=e65]:
+    - heading "What makes the WaniKani method effective?" [level=2] [ref=e66]
+    - list [ref=e68]:
+      - listitem [ref=e69]:
+        - generic [ref=e70]:
+          - heading "Mnemonics" [level=3] [ref=e71]
+          - paragraph [ref=e72]: WaniKani has mnemonics to teach you every single radical, kanji, and vocabulary word on the site. Waste less time, memorize and recall way more.
+      - listitem [ref=e73]:
+        - generic [ref=e74]:
+          - heading "Radicals" [level=3] [ref=e75]
+          - paragraph [ref=e76]: Radicals are building blocks for learning kanji. You’ll use them to create kanji (forget about individual strokes) and make mnemonics that allow you to memorize a kanji in seconds, not days or weeks.
+      - listitem [ref=e77]:
+        - generic [ref=e78]:
+          - heading "Kanji" [level=3] [ref=e79]
+          - paragraph [ref=e80]: Learn over 2,000 kanji, hand-picked and cleverly ordered, so you can learn the kanji meanings and readings more efficiently. A Japanese schoolchild will spend eight years doing what you can do in a year and a half.
+      - listitem [ref=e81]:
+        - generic [ref=e82]:
+          - heading "Vocabulary" [level=3] [ref=e83]
+          - paragraph [ref=e84]: Kanji is great, but it’s not very useful without vocabulary. Learn over 6,000 Japanese words, all carefully validated by a human to be common or useful.
+      - listitem [ref=e85]:
+        - generic [ref=e86]:
+          - heading "Lessons & Reviews" [level=3] [ref=e87]
+          - paragraph [ref=e88]: Radicals, kanji, and vocabulary are taught to you through lessons using mnemonics. Practice learned items via reviews until recalling them is second nature.
+      - listitem [ref=e89]:
+        - generic [ref=e90]:
+          - heading "Spaced Repetition System" [level=3] [ref=e91]
+          - paragraph [ref=e92]: WaniKani is more than just flashcards. Our SRS algorithm adjusts time between reviews for each individual item, calculated by your last session. You will see a radical, kanji, or vocabulary in your reviews at the optimal time for you, not anybody else.
+  - generic [ref=e93]:
+    - generic [ref=e95]:
+      - heading "How many kanji can you learn this month? Try WaniKani for free." [level=2] [ref=e96]
+      - list [ref=e97]:
+        - listitem [ref=e98]:
+          - link "Join Us" [ref=e99] [cursor=pointer]:
+            - /url: /signup
+        - listitem [ref=e100]:
+          - button "Chat with us" [ref=e101] [cursor=pointer]
+      - generic [ref=e102]:
+        - text: ...or
+        - link "sign in" [ref=e103] [cursor=pointer]:
+          - /url: /login
+      - generic [ref=e104]:
+        - text: ...or
+        - link "check out the application's uptime status" [ref=e105] [cursor=pointer]:
+          - /url: /status
+    - generic [ref=e107]:
+      - text: WaniKani is brought to you by
+      - link [ref=e109] [cursor=pointer]:
+        - /url: https://www.tofugu.com
+        - img "Tofugu logo" [ref=e110]
+      - text: Copyright © Tofugu LLC, よ.
+  - iframe

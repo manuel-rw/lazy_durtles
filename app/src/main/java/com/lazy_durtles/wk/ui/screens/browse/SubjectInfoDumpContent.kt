@@ -66,6 +66,7 @@ import com.lazy_durtles.wk.services.JobRunnerService
 import com.lazy_durtles.wk.ui.common.BulkOpDialog
 import com.lazy_durtles.wk.ui.common.BulkOpState
 import com.lazy_durtles.wk.ui.common.BulkOpType
+import com.lazy_durtles.wk.ui.common.MnemonicImageSection
 import com.lazy_durtles.wk.ui.common.runBulkOp
 import com.lazy_durtles.wk.ui.screens.settings.SettingsGroupCard
 import com.lazy_durtles.wk.util.AudioUtil
@@ -185,6 +186,7 @@ public fun SubjectInfoDumpContent(
         if (hasMeaningSection) {
             InfoSection(header = "Meaning") {
                 if (showMeaningRelated && subject.hasMeaningMnemonic() && showMeaningMnemonic) {
+                    MnemonicImageSection(subject)
                     InfoText(subject.getMeaningMnemonicRichText().toString())
                 }
                 if (showMeaningRelated && subject.hasMeaningHint() && showMeaningMnemonic) {
