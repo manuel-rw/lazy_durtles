@@ -51,7 +51,6 @@ fun MainScreen(
     onGoToSettings: () -> Unit,
     onViewSessionLog: () -> Unit,
     onRetryApiError: () -> Unit,
-    onViewKeyboardHelp: () -> Unit,
     onSyncNow: () -> Unit,
     onSrsBucketClick: (bucket: Int) -> Unit,
     onSubjectClick: (subjectId: Long, subjectIds: List<Long>) -> Unit,
@@ -146,7 +145,6 @@ fun MainScreen(
                     onResumeSession = onResumeSession,
                     onGoToSettings = onGoToSettings,
                     onRetryApiError = onRetryApiError,
-                    onViewKeyboardHelp = onViewKeyboardHelp,
                     onSrsBucketClick = onSrsBucketClick,
                     onLevelProgressEntryClick = { level, type ->
                         onSearchResults(levelProgressSearchParameters(level, type), 0, null)
@@ -197,7 +195,6 @@ fun MainScreenPreview() {
         onGoToSettings = {},
         onViewSessionLog = {},
         onRetryApiError = {},
-        onViewKeyboardHelp = {},
         onSyncNow = {},
         onSrsBucketClick = {},
         onSubjectClick = { _, _ -> },

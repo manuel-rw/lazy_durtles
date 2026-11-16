@@ -2,17 +2,22 @@ package com.lazy_durtles.wk.ui.screens.browse
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RangeSlider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,7 +36,10 @@ import com.lazy_durtles.wk.enums.SearchSortOrder
 import com.lazy_durtles.wk.enums.SubjectType
 import com.lazy_durtles.wk.model.AdvancedSearchParameters
 import com.lazy_durtles.wk.model.SrsSystemRepository
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolIcon
+import com.lazy_durtles.wk.ui.icons.MaterialSymbolsIcons
 import com.lazy_durtles.wk.util.TextUtil
+import kotlin.math.roundToInt
 
 /**
  * State holder for the advanced search form, ported from the legacy
@@ -162,48 +170,47 @@ private fun starRatingLabel(rating: Int): String {
 
 /**
  * The advanced search filter form, ported from the legacy
- * AdvancedSearchFormView + advanced_search.xml. Shows Search buttons at the
- * top and bottom of the form.
+ * AdvancedSearchFormView + advanced_search.xml, redensified for Material
+ * Expressive 3: range sliders instead of min/max field pairs, filter chips
+ * instead of switch lists. Submission is handled by the caller (the search
+ * screen's always-visible FAB), so the form renders no button of its own.
  */
 @Composable
 fun AdvancedSearchForm(
     state: AdvancedSearchFormState,
-    onSearch: (searchParametersJson: String) -> Unit,
     modifier: Modifier = Modifier,
-    searchButtonLabel: String = "Search",
-    showSortOrder: Boolean = true,
 ) {
-    fun submit() {
-        advancedSearchParametersJson(state.extractParameters())?.let(onSearch)
-    }
-
     Column(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Button(onClick = { submit() }, modifier = Modifier.padding(top = 8.dp)) {
-            Text(searchButtonLabel)
-        }
-
-        RangeFieldRow(
-            label = "Level range:",
+        RangeSliderRow(
+            label = "Level range",
             minValue = state.minLevel,
             maxValue = state.maxLevel,
+            bounds = 1f..60f,
+            steps = 58,
             onMinChange = { state.minLevel = it },
             onMaxChange = { state.maxLevel = it },
         )
 
-        RangeFieldRow(
-            label = "Frequency range:",
+        RangeSliderRow(
+            label = "Frequency range",
             minValue = state.minFrequency,
             maxValue = state.maxFrequency,
+            bounds = 1f..2500f,
+            steps = 0,
             onMinChange = { state.minFrequency = it },
             onMaxChange = { state.maxFrequency = it },
         )
 
-        SwitchRow(label = "Only leeches:", checked = state.leechesOnly, onCheckedChange = { state.leechesOnly = it })
+        SwitchRow(
+            label = "Only leeches",
+            checked = state.leechesOnly,
+            onCheckedChange = { state.leechesOnly = it },
+        )
 
         NumberUnitFieldRow(
             label = "Next review in less than:",
@@ -240,78 +247,191 @@ fun AdvancedSearchForm(
             unit = "days ago",
         )
 
-        if (showSortOrder) {
-            SortOrderRow(selected = state.sortOrder, onSelect = { state.sortOrder = it })
-        }
+        SortOrderRow(selected = state.sortOrder, onSelect = { state.sortOrder = it })
 
         if (GlobalSettings.Other.getEnableStarRatings()) {
-            SectionHeader("Star rating:")
-            for (rating in 0..5) {
-                SwitchRow(
-                    label = starRatingLabel(rating),
-                    checked = rating in state.starRatings,
-                    onCheckedChange = { checked ->
-                        if (checked) state.starRatings.add(rating) else state.starRatings.remove(rating)
+            ChipSection(
+                title = "Star rating",
+                chips = (0..5).map { rating ->
+                    ChipSpec(
+                        label = starRatingLabel(rating),
+                        selected = rating in state.starRatings,
+                        onClick = {
+                            if (rating in state.starRatings) state.starRatings.remove(rating)
+                            else state.starRatings.add(rating)
+                        },
+                    )
+                },
+            )
+        }
+
+        ChipSection(
+            title = "SRS stages",
+            chips = srsStageOptions().map { (label, tag) ->
+                ChipSpec(
+                    label = label,
+                    selected = tag in state.srsStages,
+                    onClick = {
+                        if (tag in state.srsStages) state.srsStages.remove(tag)
+                        else state.srsStages.add(tag)
+                    },
+                )
+            },
+        )
+
+        ChipSection(
+            title = "Subject types",
+            chips = listOf(
+                "Radical" to SubjectType.WANIKANI_RADICAL,
+                "Kanji" to SubjectType.WANIKANI_KANJI,
+                "Vocabulary" to SubjectType.WANIKANI_VOCAB,
+                "Kana Vocabulary" to SubjectType.WANIKANI_KANA_VOCAB,
+            ).map { (label, type) ->
+                ChipSpec(
+                    label = label,
+                    selected = type in state.itemTypes,
+                    onClick = {
+                        if (type in state.itemTypes) state.itemTypes.remove(type)
+                        else state.itemTypes.add(type)
+                    },
+                )
+            },
+        )
+
+        ChipSection(
+            title = "JLPT levels",
+            chips = listOf(
+                "None" to 0, "N5" to 5, "N4" to 4, "N3" to 3, "N2" to 2, "N1" to 1,
+            ).map { (label, value) ->
+                ChipSpec(
+                    label = label,
+                    selected = value in state.jlptLevels,
+                    onClick = {
+                        if (value in state.jlptLevels) state.jlptLevels.remove(value)
+                        else state.jlptLevels.add(value)
+                    },
+                )
+            },
+        )
+
+        ChipSection(
+            title = "Jōyō kanji grades",
+            chips = listOf(
+                "None" to 0, "1" to 1, "2" to 2, "3" to 3,
+                "4" to 4, "5" to 5, "6" to 6, "Middle school" to 7,
+            ).map { (label, value) ->
+                ChipSpec(
+                    label = label,
+                    selected = value in state.joyoGrades,
+                    onClick = {
+                        if (value in state.joyoGrades) state.joyoGrades.remove(value)
+                        else state.joyoGrades.add(value)
+                    },
+                )
+            },
+        )
+    }
+}
+
+/** One selectable filter chip's data. */
+private data class ChipSpec(
+    val label: String,
+    val selected: Boolean,
+    val onClick: () -> Unit,
+)
+
+/**
+ * A multi-select filter chip group: much denser than a switch list.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ChipSection(
+    title: String,
+    chips: List<ChipSpec>,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        SectionHeader(title)
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            chips.forEach { chip ->
+                FilterChip(
+                    selected = chip.selected,
+                    onClick = chip.onClick,
+                    label = { Text(chip.label) },
+                    leadingIcon = if (chip.selected) {
+                        {
+                            MaterialSymbolIcon(
+                                icon = MaterialSymbolsIcons.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                    } else {
+                        null
                     },
                 )
             }
         }
+    }
+}
 
-        SectionHeader("SRS stages:")
-        for ((label, tag) in srsStageOptions()) {
-            SwitchRow(
-                label = "$label:",
-                checked = tag in state.srsStages,
-                onCheckedChange = { checked ->
-                    if (checked) state.srsStages.add(tag) else state.srsStages.remove(tag)
-                },
+/**
+ * A min/max filter rendered as a Material 3 range slider. The full range
+ * means "not set" (unbounded), like the empty min/max fields of the legacy
+ * form; dragging a thumb inward bounds the search.
+ */
+@Composable
+private fun RangeSliderRow(
+    label: String,
+    minValue: String,
+    maxValue: String,
+    bounds: ClosedFloatingPointRange<Float>,
+    steps: Int,
+    onMinChange: (String) -> Unit,
+    onMaxChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val lower = (minValue.toFloatOrNull() ?: bounds.start)
+        .coerceIn(bounds.start, bounds.endInclusive)
+    val upper = (maxValue.toFloatOrNull() ?: bounds.endInclusive)
+        .coerceIn(bounds.start, bounds.endInclusive)
+    val range = lower..maxOf(lower, upper)
+    val valueText = if (minValue.isEmpty() && maxValue.isEmpty()) {
+        "Any"
+    } else {
+        val lo = minValue.ifEmpty { bounds.start.roundToInt().toString() }
+        val hi = maxValue.ifEmpty { bounds.endInclusive.roundToInt().toString() }
+        "$lo – $hi"
+    }
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(text = label, style = MaterialTheme.typography.bodyMedium)
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = valueText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-
-        SectionHeader("Subject types:")
-        for ((label, type) in listOf(
-            "Radical:" to SubjectType.WANIKANI_RADICAL,
-            "Kanji:" to SubjectType.WANIKANI_KANJI,
-            "Vocabulary:" to SubjectType.WANIKANI_VOCAB,
-            "Kana Vocabulary:" to SubjectType.WANIKANI_KANA_VOCAB,
-        )) {
-            SwitchRow(
-                label = label,
-                checked = type in state.itemTypes,
-                onCheckedChange = { checked ->
-                    if (checked) state.itemTypes.add(type) else state.itemTypes.remove(type)
-                },
-            )
-        }
-
-        SectionHeader("JLPT levels:")
-        for ((label, value) in listOf("None:" to 0, "N5:" to 5, "N4:" to 4, "N3:" to 3, "N2:" to 2, "N1:" to 1)) {
-            SwitchRow(
-                label = label,
-                checked = value in state.jlptLevels,
-                onCheckedChange = { checked ->
-                    if (checked) state.jlptLevels.add(value) else state.jlptLevels.remove(value)
-                },
-            )
-        }
-
-        SectionHeader("Jōyō kanji grades:")
-        for ((label, value) in listOf(
-            "None:" to 0, "1:" to 1, "2:" to 2, "3:" to 3,
-            "4:" to 4, "5:" to 5, "6:" to 6, "Middle school:" to 7,
-        )) {
-            SwitchRow(
-                label = label,
-                checked = value in state.joyoGrades,
-                onCheckedChange = { checked ->
-                    if (checked) state.joyoGrades.add(value) else state.joyoGrades.remove(value)
-                },
-            )
-        }
-
-        Button(onClick = { submit() }, modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)) {
-            Text(searchButtonLabel)
-        }
+        RangeSlider(
+            value = range,
+            onValueChange = { newRange ->
+                val lo = newRange.start.roundToInt()
+                    .coerceIn(bounds.start.roundToInt(), bounds.endInclusive.roundToInt())
+                val hi = newRange.endInclusive.roundToInt()
+                    .coerceIn(lo, bounds.endInclusive.roundToInt())
+                onMinChange(if (lo <= bounds.start.roundToInt()) "" else lo.toString())
+                onMaxChange(if (hi >= bounds.endInclusive.roundToInt()) "" else hi.toString())
+            },
+            valueRange = bounds,
+            steps = steps,
+        )
     }
 }
 
@@ -342,31 +462,6 @@ private fun SwitchRow(
             modifier = Modifier.weight(1f),
         )
         Switch(checked = checked, onCheckedChange = onCheckedChange)
-    }
-}
-
-@Composable
-private fun RangeFieldRow(
-    label: String,
-    minValue: String,
-    maxValue: String,
-    onMinChange: (String) -> Unit,
-    onMaxChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f),
-        )
-        NumberField(value = minValue, onValueChange = onMinChange, hint = "Min", modifier = Modifier.weight(1f))
-        Text(text = "-", style = MaterialTheme.typography.bodyMedium)
-        NumberField(value = maxValue, onValueChange = onMaxChange, hint = "Max", modifier = Modifier.weight(1f))
     }
 }
 

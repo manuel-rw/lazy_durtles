@@ -1,18 +1,26 @@
 package com.lazy_durtles.wk.ui.screens.browse
 
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import com.lazy_durtles.wk.ui.icons.MaterialSymbolsIcons
 import com.lazy_durtles.wk.ui.icons.MaterialSymbolIcon
 import androidx.compose.material3.IconButton
@@ -23,16 +31,22 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.lazy_durtles.wk.GlobalSettings
 import com.lazy_durtles.wk.WkApplication
 import com.lazy_durtles.wk.db.Converters
@@ -46,8 +60,9 @@ import kotlinx.coroutines.withContext
 /**
  * The study materials editor ("My notes"), ported from the legacy
  * StudyMaterialsActivity: the user's meaning note, reading note and up to ten
- * meaning synonyms with reorder arrows. Saving pushes the material through
- * SaveStudyMaterialJob, like the legacy activity.
+ * meaning synonyms, added with a button and reordered by dragging their
+ * handles. Saving pushes the material through SaveStudyMaterialJob, like the
+ * legacy activity.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,7 +78,15 @@ fun StudyMaterialsScreen(
     var populated by rememberSaveable { mutableStateOf(false) }
     var meaningNote by rememberSaveable { mutableStateOf("") }
     var readingNote by rememberSaveable { mutableStateOf("") }
-    var synonyms by rememberSaveable { mutableStateOf(List(10) { "" }) }
+    var synonyms by rememberSaveable { mutableStateOf(listOf<String>()) }
+
+    // Drag-to-reorder state for the synonym rows. dragIndex is the row being
+    // dragged, dragOffsetPx its visual offset within the current slot, and
+    // rowStridePx the measured distance between row tops.
+    var dragIndex by remember { mutableStateOf<Int?>(null) }
+    var dragOffsetPx by remember { mutableFloatStateOf(0f) }
+    var rowStridePx by remember { mutableFloatStateOf(0f) }
+    val rowSpacingPx = with(LocalDensity.current) { 8.dp.toPx() }
 
     LaunchedEffect(subjectId) {
         val loaded = withContext(Dispatchers.IO) {
@@ -78,11 +101,7 @@ fun StudyMaterialsScreen(
             populated = true
             meaningNote = loaded.getMeaningNote() ?: ""
             readingNote = loaded.getReadingNote() ?: ""
-            val loadedSynonyms = loaded.getMeaningSynonyms().toMutableList()
-            while (loadedSynonyms.size < 10) {
-                loadedSynonyms.add("")
-            }
-            synonyms = loadedSynonyms.take(10)
+            synonyms = loaded.getMeaningSynonyms().take(10)
         }
         loading = false
     }
@@ -96,7 +115,7 @@ fun StudyMaterialsScreen(
                 data.add(currentSubject.getId().toString())
                 data.add(meaningNote)
                 data.add(readingNote)
-                data.addAll(synonyms)
+                data.addAll(synonyms.filter { it.isNotBlank() })
                 val dataString = Converters.getObjectMapper().writeValueAsString(data)
                 JobRunnerService.schedule(SaveStudyMaterialJob::class.java, dataString)
             }
@@ -105,6 +124,7 @@ fun StudyMaterialsScreen(
     }
 
     val s = subject
+    val noteFontSize = GlobalSettings.Font.getFontSizeSubjectInfo().sp
     Scaffold(
         topBar = {
             TopAppBar(
@@ -115,6 +135,24 @@ fun StudyMaterialsScreen(
                     }
                 },
             )
+        },
+        bottomBar = {
+            // Pinned Save action, visible while the content scrolls.
+            Surface(
+                tonalElevation = 3.dp,
+                shadowElevation = 8.dp,
+                modifier = Modifier.navigationBarsPadding(),
+            ) {
+                Button(
+                    onClick = { saveStudyMaterials() },
+                    enabled = !loading && s != null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                ) {
+                    Text("Save")
+                }
+            }
         },
         modifier = modifier.fillMaxSize(),
     ) { padding ->
@@ -136,107 +174,146 @@ fun StudyMaterialsScreen(
                     .fillMaxSize()
                     .padding(padding)
                     .verticalScroll(rememberScrollState())
-                    .padding(8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text(
-                    text = s.getInfoTitle("My notes for ", ":").toString(),
-                    fontSize = GlobalSettings.Font.getFontSizeSubjectInfo().sp,
-                )
-                Button(
-                    onClick = { saveStudyMaterials() },
-                    modifier = Modifier.padding(start = 40.dp),
-                ) {
-                    Text("Save")
-                }
-                Text(
-                    text = "Meaning note:",
-                    fontSize = GlobalSettings.Font.getFontSizeSubjectInfo().sp,
-                )
-                OutlinedTextField(
-                    value = meaningNote,
-                    onValueChange = { meaningNote = it.take(500) },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 3,
-                    placeholder = { Text("My meaning note") },
-                )
-                Text(
-                    text = "Reading note:",
-                    fontSize = GlobalSettings.Font.getFontSizeSubjectInfo().sp,
-                )
-                OutlinedTextField(
-                    value = readingNote,
-                    onValueChange = { readingNote = it.take(500) },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 3,
-                    placeholder = { Text("My reading note") },
-                )
-                Text(
-                    text = "Synonyms:",
-                    fontSize = GlobalSettings.Font.getFontSizeSubjectInfo().sp,
-                )
-                synonyms.forEachIndexed { index, value ->
-                    SynonymRow(
-                        index = index,
-                        value = value,
-                        onValueChange = { newValue ->
-                            synonyms = synonyms.toMutableList().also { it[index] = newValue }
-                        },
-                        onSwap = { otherIndex ->
-                            val other = synonyms[otherIndex]
-                            synonyms = synonyms.toMutableList().also {
-                                it[otherIndex] = synonyms[index]
-                                it[index] = other
-                            }
-                        },
+                InfoSection(header = "Meaning note") {
+                    OutlinedTextField(
+                        value = meaningNote,
+                        onValueChange = { meaningNote = it.take(500) },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3,
+                        placeholder = { Text("My meaning note") },
+                        textStyle = LocalTextStyle.current.copy(fontSize = noteFontSize),
                     )
                 }
-                Button(
-                    onClick = { saveStudyMaterials() },
-                    modifier = Modifier.padding(start = 40.dp, top = 16.dp),
-                ) {
-                    Text("Save")
+                InfoSection(header = "Reading note") {
+                    OutlinedTextField(
+                        value = readingNote,
+                        onValueChange = { readingNote = it.take(500) },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3,
+                        placeholder = { Text("My reading note") },
+                        textStyle = LocalTextStyle.current.copy(fontSize = noteFontSize),
+                    )
                 }
+                InfoSection(header = "Synonyms") {
+                    synonyms.forEachIndexed { index, value ->
+                        SynonymRow(
+                            value = value,
+                            isDragging = dragIndex == index,
+                            dragOffsetPx = if (dragIndex == index) dragOffsetPx else 0f,
+                            onValueChange = { newValue ->
+                                synonyms = synonyms.toMutableList().also { it[index] = newValue }
+                            },
+                            onRemove = {
+                                synonyms = synonyms.toMutableList().also { it.removeAt(index) }
+                            },
+                            onDragStart = {
+                                dragIndex = index
+                                dragOffsetPx = 0f
+                            },
+                            onDrag = { delta ->
+                                dragOffsetPx += delta
+                                val current = dragIndex ?: return@SynonymRow
+                                if (rowStridePx <= 0f) return@SynonymRow
+                                val steps = (dragOffsetPx / rowStridePx).toInt()
+                                if (steps != 0) {
+                                    val target = (current + steps).coerceIn(0, synonyms.lastIndex)
+                                    if (target != current) {
+                                        synonyms = synonyms.toMutableList().apply {
+                                            add(target, removeAt(current))
+                                        }
+                                        dragIndex = target
+                                        dragOffsetPx -= (target - current) * rowStridePx
+                                    }
+                                }
+                            },
+                            onDragEnd = {
+                                dragIndex = null
+                                dragOffsetPx = 0f
+                            },
+                            onRowMeasured = { rowStridePx = it + rowSpacingPx },
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = { synonyms = synonyms + "" },
+                        enabled = synonyms.size < 10,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        MaterialSymbolIcon(MaterialSymbolsIcons.Add, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Add synonym")
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
 }
 
 /**
- * One synonym row, ported from the legacy SynonymRowView: reorder arrows
- * (down, up) followed by the text field. The up arrow is invisible on the
- * first row and the down arrow on the last, keeping their space like the
- * legacy INVISIBLE flag.
+ * One synonym row: a drag handle for reordering, the text field, and a remove
+ * button. The drag gesture lives on the handle only, so drags elsewhere keep
+ * scrolling the form. While dragging, the row is offset by [dragOffsetPx] and
+ * drawn above its siblings; the parent swaps list entries when the offset
+ * crosses a row boundary. Callbacks are read through rememberUpdatedState so
+ * an in-progress drag survives the live reordering.
  */
 @Composable
 private fun SynonymRow(
-    index: Int,
     value: String,
+    isDragging: Boolean,
+    dragOffsetPx: Float,
     onValueChange: (String) -> Unit,
-    onSwap: (otherIndex: Int) -> Unit,
+    onRemove: () -> Unit,
+    onDragStart: () -> Unit,
+    onDrag: (Float) -> Unit,
+    onDragEnd: () -> Unit,
+    onRowMeasured: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        IconButton(
-            onClick = { onSwap(index + 1) },
-            enabled = index < 9,
-            modifier = Modifier.then(if (index == 9) Modifier.alpha(0f) else Modifier),
+    val currentOnDragStart by rememberUpdatedState(onDragStart)
+    val currentOnDrag by rememberUpdatedState(onDrag)
+    val currentOnDragEnd by rememberUpdatedState(onDragEnd)
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .onSizeChanged { onRowMeasured(it.height) }
+            .zIndex(if (isDragging) 1f else 0f)
+            .graphicsLayer { translationY = dragOffsetPx },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragStart = { currentOnDragStart() },
+                        onDrag = { change, dragAmount ->
+                            change.consume()
+                            currentOnDrag(dragAmount.y)
+                        },
+                        onDragEnd = { currentOnDragEnd() },
+                        onDragCancel = { currentOnDragEnd() },
+                    )
+                },
+            contentAlignment = Alignment.Center,
         ) {
-            Text(text = "⇩")
-        }
-        IconButton(
-            onClick = { onSwap(index - 1) },
-            enabled = index > 0,
-            modifier = Modifier.then(if (index == 0) Modifier.alpha(0f) else Modifier),
-        ) {
-            Text(text = "⇧")
+            MaterialSymbolIcon(MaterialSymbolsIcons.DragHandle, "Drag to reorder")
         }
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             singleLine = true,
             placeholder = { Text("Synonym") },
+            textStyle = LocalTextStyle.current.copy(
+                fontSize = GlobalSettings.Font.getFontSizeSubjectInfo().sp,
+            ),
             modifier = Modifier.weight(1f),
         )
+        IconButton(onClick = onRemove) {
+            MaterialSymbolIcon(MaterialSymbolsIcons.Close, "Remove synonym")
+        }
     }
 }

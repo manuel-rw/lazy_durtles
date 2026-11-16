@@ -9,9 +9,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.lazy_durtles.wk.GlobalSettings
@@ -46,7 +43,6 @@ fun DashboardScreen(
     onResumeSession: () -> Unit,
     onGoToSettings: () -> Unit,
     onRetryApiError: () -> Unit,
-    onViewKeyboardHelp: () -> Unit,
     onSrsBucketClick: (bucket: Int) -> Unit,
     onLevelProgressEntryClick: (level: Int, type: SubjectType) -> Unit,
     onSubjectClick: (subjectId: Long, allIds: LongArray) -> Unit,
@@ -78,9 +74,6 @@ fun DashboardScreen(
 
     val firstTimeSetup = GlobalSettings.getFirstTimeSetup()
     val userLevel = levelDuration.value?.level ?: 0
-    val keyboardHelpDismissed = remember {
-        mutableStateOf(GlobalSettings.Tutorials.getKeyboardHelpDismissed())
-    }
 
     Column(modifier = modifier.fillMaxWidth()) {
         Column(
@@ -96,16 +89,6 @@ fun DashboardScreen(
                 onRetry = onRetryApiError,
                 onOpenSettings = onGoToSettings,
             )
-
-            if (!keyboardHelpDismissed.value) {
-                KeyboardHelpBanner(
-                    onView = onViewKeyboardHelp,
-                    onDismiss = {
-                        GlobalSettings.Tutorials.setKeyboardHelpDismissed(true)
-                        keyboardHelpDismissed.value = true
-                    },
-                )
-            }
 
             if (firstTimeSetup == 0) {
                 FirstTimeSetupText()

@@ -28,6 +28,7 @@ import com.lazy_durtles.wk.WkApplication;
 import com.lazy_durtles.wk.db.dao.AudioDownloadStatusDao;
 import com.lazy_durtles.wk.db.dao.LevelProgressionDao;
 import com.lazy_durtles.wk.db.dao.LogRecordDao;
+import com.lazy_durtles.wk.db.dao.MnemonicImageDao;
 import com.lazy_durtles.wk.db.dao.PropertiesDao;
 import com.lazy_durtles.wk.db.dao.SearchPresetDao;
 import com.lazy_durtles.wk.db.dao.SessionItemDao;
@@ -41,6 +42,7 @@ import com.lazy_durtles.wk.db.dao.TaskDefinitionDao;
 import com.lazy_durtles.wk.db.model.AudioDownloadStatus;
 import com.lazy_durtles.wk.db.model.LevelProgressionEntityDefinition;
 import com.lazy_durtles.wk.db.model.LogRecordEntityDefinition;
+import com.lazy_durtles.wk.db.model.MnemonicImage;
 import com.lazy_durtles.wk.db.model.PronunciationAudioOwner;
 import com.lazy_durtles.wk.db.model.Property;
 import com.lazy_durtles.wk.db.model.SearchPreset;
@@ -53,6 +55,7 @@ import com.lazy_durtles.wk.jobs.TickJob;
 import com.lazy_durtles.wk.model.Session;
 import com.lazy_durtles.wk.services.JobRunnerService;
 import com.lazy_durtles.wk.tasks.DownloadAudioTask;
+import com.lazy_durtles.wk.tasks.DownloadMnemonicImagesTask;
 import com.lazy_durtles.wk.tasks.DownloadPitchInfoTask;
 import com.lazy_durtles.wk.tasks.GetAssignmentsTask;
 import com.lazy_durtles.wk.tasks.GetLevelProgressionTask;
@@ -90,8 +93,9 @@ import static com.lazy_durtles.wk.util.ObjectSupport.join;
         SessionItem.class,
         LogRecordEntityDefinition.class,
         AudioDownloadStatus.class,
-        SearchPreset.class
-}, version = 68)
+        SearchPreset.class,
+        MnemonicImage.class
+}, version = 69)
 @TypeConverters(Converters.class)
 public abstract class AppDatabase extends RoomDatabase {
     /**
@@ -335,6 +339,18 @@ public abstract class AppDatabase extends RoomDatabase {
     };
 
     /**
+     * Migration from 68 to 69: add the mnemonic_image table for the optional
+     * WaniKani mnemonic background drawings data pack.
+     */
+    public static final Migration MIGRATION_68_69 = new Migration(68, 69) {
+        @Override
+        public void migrate(final SupportSQLiteDatabase database) {
+            database.execSQL("CREATE TABLE IF NOT EXISTS `mnemonic_image` "
+                    + "(`subjectId` INTEGER NOT NULL PRIMARY KEY, `url` TEXT, `description` TEXT, `fileName` TEXT)");
+        }
+    };
+
+    /**
      * Get the singleton instance.
      *
      * @return the instance
@@ -363,7 +379,8 @@ public abstract class AppDatabase extends RoomDatabase {
                             MIGRATION_64_65,
                             MIGRATION_65_66,
                             MIGRATION_66_67,
-                            MIGRATION_67_68)
+                            MIGRATION_67_68,
+                            MIGRATION_68_69)
                     .fallbackToDestructiveMigration()
                     .build();
         }
@@ -767,4 +784,26 @@ public abstract class AppDatabase extends RoomDatabase {
      * @return the DAO
      */
     public abstract SearchPresetDao searchPresetDao();
+
+    /**
+     * Get the DAO instance for mnemonic images.
+     *
+     * @return the DAO
+     */
+    public abstract MnemonicImageDao mnemonicImageDao();
+
+    /**
+     * Add a task for downloading the optional mnemonic image data pack if it
+     * doesn't exist already.
+     */
+    public final void assertDownloadMnemonicImagesTask() {
+        final int count = taskDefinitionDao().getCountByType(DownloadMnemonicImagesTask.class);
+        if (count == 0) {
+            final TaskDefinition taskDefinition = new TaskDefinition();
+            taskDefinition.setTaskClass(DownloadMnemonicImagesTask.class);
+            taskDefinition.setPriority(DownloadMnemonicImagesTask.PRIORITY);
+            taskDefinition.setData("");
+            taskDefinitionDao().insertTaskDefinition(taskDefinition);
+        }
+    }
 }

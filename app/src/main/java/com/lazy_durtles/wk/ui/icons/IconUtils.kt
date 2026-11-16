@@ -42,6 +42,8 @@ object MaterialSymbolsIcons {
     val FilterList = '\uE152'
     val Flag = '\uE153'
     val Link = '\uE157'
+    val Add = '\uE145'
+    val DragHandle = '\uE25D'
     val DoNotDisturbOn = '\uE15C'
     val Save = '\uE161'
     val Sort = '\uE164'

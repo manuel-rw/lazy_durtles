@@ -59,6 +59,7 @@ import com.lazy_durtles.wk.enums.FragmentTransitionAnimation
 import com.lazy_durtles.wk.enums.SubjectInfoDump
 import com.lazy_durtles.wk.model.FloatingUiState
 import com.lazy_durtles.wk.model.Session
+import com.lazy_durtles.wk.ui.common.MnemonicImageSection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -453,6 +454,7 @@ internal fun SubjectInfoCard(
             }
             if (showMeaningRelated) {
                 if (subject.hasMeaningMnemonic() && showMeaningMnemonic) {
+                    MnemonicImageSection(subject)
                     SubjectInfoText("Meaning mnemonic", subject.getMeaningMnemonicRichText().toString())
                 }
                 if (subject.hasMeaningHint() && showMeaningMnemonic) {

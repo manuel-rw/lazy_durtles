@@ -80,35 +80,6 @@ fun ApiStatusBanner(
 }
 
 /**
- * Banner shown when the keyboard help has not been dismissed yet.
- */
-@Composable
-fun KeyboardHelpBanner(
-    onView: () -> Unit,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier.padding(8.dp),
-    ) {
-        Text(
-            text = "Please take a moment to review some hints for your keyboard settings",
-            modifier = Modifier.weight(1f),
-        )
-        TextButton(
-            onClick = onView,
-        ) {
-            Text("View")
-        }
-        TextButton(
-            onClick = onDismiss,
-        ) {
-            Text("Dismiss")
-        }
-    }
-}
-
-/**
  * Text shown while the app performs its first-time setup.
  */
 @Composable

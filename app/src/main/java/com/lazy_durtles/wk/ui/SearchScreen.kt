@@ -34,6 +34,7 @@ import com.lazy_durtles.wk.WkApplication
 import com.lazy_durtles.wk.db.model.Subject
 import com.lazy_durtles.wk.ui.screens.browse.AdvancedSearchForm
 import com.lazy_durtles.wk.ui.screens.browse.AdvancedSearchFormState
+import com.lazy_durtles.wk.ui.screens.browse.advancedSearchParametersJson
 import com.lazy_durtles.wk.ui.screens.browse.parseAdvancedSearchParameters
 import com.lazy_durtles.wk.ui.screens.search.SearchPresetSection
 import com.lazy_durtles.wk.util.Logger
@@ -43,6 +44,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 private const val SEARCH_DEBOUNCE_MS = 400L
+private const val ADVANCED_SEARCH_DEBOUNCE_MS = 600L
 private const val MIN_QUERY_LENGTH = 3
 
 /** Marker type so the search screen can get its own [Logger] instance. */
@@ -75,10 +77,17 @@ fun SearchScreen(
     var showAdvanced by remember { mutableStateOf(false) }
     val formState = remember { AdvancedSearchFormState() }
 
+    // The advanced search auto-runs when the form changes. The baseline is the
+    // form contents as they came from the prefill (or empty), so arriving with
+    // prefilled parameters does not immediately re-run the search.
+    var prefillDone by remember { mutableStateOf(false) }
+    var baselineJson by remember { mutableStateOf<String?>(null) }
+
     // Preload the advanced form when coming back from "Refine search" on the
     // results screen. A non-JSON value is a keyword search; prefill the
     // query box with it, like the legacy search prefill behaviour.
     LaunchedEffect(initialParametersJson) {
+        var prefilled = false
         if (initialParametersJson != null) {
             val parameters = withContext(Dispatchers.IO) {
                 parseAdvancedSearchParameters(initialParametersJson)
@@ -86,128 +95,171 @@ fun SearchScreen(
             if (parameters != null) {
                 formState.injectParameters(parameters)
                 showAdvanced = true
+                baselineJson = advancedSearchParametersJson(formState.extractParameters())
+                prefilled = true
             }
             else {
                 query = initialParametersJson
             }
         }
+        if (!prefilled) {
+            baselineJson = advancedSearchParametersJson(formState.extractParameters())
+        }
+        prefillDone = true
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+    // Auto-run the advanced search whenever the form changes, debounced so
+    // rapid edits collapse into one search.
+    LaunchedEffect(
+        showAdvanced,
+        prefillDone,
+        formState.minLevel,
+        formState.maxLevel,
+        formState.minFrequency,
+        formState.maxFrequency,
+        formState.leechesOnly,
+        formState.reviewLessHours,
+        formState.reviewMoreHours,
+        formState.incorrectHours,
+        formState.burnedLessDays,
+        formState.burnedMoreDays,
+        formState.sortOrder,
+        formState.starRatings.toList(),
+        formState.srsStages.toList(),
+        formState.itemTypes.toList(),
+        formState.jlptLevels.toList(),
+        formState.joyoGrades.toList(),
     ) {
-        // Search presets: pick, run and delete, like the legacy browse overview.
-        SearchPresetSection(
-            onRunPreset = { preset ->
-                onSearchResults(preset.data, preset.type, preset.name)
-            },
-        )
-
-        SearchBar(
-            query = query,
-            onQueryChange = { query = it },
-            onSearch = { submitted ->
-                if (submitted.trim().length >= MIN_QUERY_LENGTH) {
-                    onSearchResults(submitted.trim(), 1, null)
-                }
-            },
-            active = false,
-            onActiveChange = { },
-            placeholder = { Text("Search") },
-            leadingIcon = {
-                MaterialSymbolIcon(
-                    icon = MaterialSymbolsIcons.Search,
-                    contentDescription = "Search",
-                )
-            },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
+        if (!showAdvanced || !prefillDone) {
+            return@LaunchedEffect
         }
+        val json = advancedSearchParametersJson(formState.extractParameters()) ?: return@LaunchedEffect
+        if (json == baselineJson) {
+            return@LaunchedEffect
+        }
+        delay(ADVANCED_SEARCH_DEBOUNCE_MS)
+        val current = advancedSearchParametersJson(formState.extractParameters()) ?: return@LaunchedEffect
+        if (current == baselineJson) {
+            return@LaunchedEffect
+        }
+        baselineJson = current
+        onSearchResults(current, 2, null)
+    }
 
-        // Advanced filters, collapsed by default.
-        Row(
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .clickable { showAdvanced = !showAdvanced }
-                .padding(vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            MaterialSymbolIcon(
-                icon = if (showAdvanced) MaterialSymbolsIcons.KeyboardArrowUp else MaterialSymbolsIcons.KeyboardArrowDown,
-                contentDescription = if (showAdvanced) "Collapse" else "Expand",
+            // Search presets: pick, run and delete, like the legacy browse overview.
+            SearchPresetSection(
+                onRunPreset = { preset ->
+                    onSearchResults(preset.data, preset.type, preset.name)
+                },
             )
-            Text(
-                text = "Advanced filters",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(start = 8.dp),
-            )
-        }
-        if (showAdvanced) {
-            AdvancedSearchForm(
-                state = formState,
-                onSearch = { json -> onSearchResults(json, 2, null) },
-            )
-        }
 
-        // Debounce the query, then run the search off the main thread.
-        LaunchedEffect(query) {
-            val trimmed = query.trim()
-            errorMessage = null
-            if (trimmed.length < MIN_QUERY_LENGTH) {
-                results = emptyList()
-                searching = false
-                return@LaunchedEffect
-            }
-            searching = true
-            delay(SEARCH_DEBOUNCE_MS)
-            if (query.trim() != trimmed) {
-                return@LaunchedEffect
-            }
-            try {
-                val found = withContext(Dispatchers.IO) {
-                    SearchUtil.searchSubjects(1, trimmed)
-                }
-                results = found
-                errorMessage = null
-            }
-            catch (e: Exception) {
-                Logger.get(SearchScreenLogMarker::class.java).error(e, "Search failed")
-                errorMessage = "Something went wrong while searching. Please try again."
-            }
-            searching = false
-        }
-
-        when {
-            errorMessage != null -> StatusText(errorMessage!!)
-            !searching && query.trim().length >= MIN_QUERY_LENGTH && results.isEmpty() ->
-                StatusText("No subjects found for \"${query.trim()}\".")
-            !searching && query.trim().length < MIN_QUERY_LENGTH && results.isEmpty() ->
-                SearchEmptyState()
-            else -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                // Rendered eagerly inside the screen's vertical scroll: a
-                // LazyColumn here would be measured with infinite height and
-                // crash. The result set is capped at MAX_SEARCH_HITS.
-                for (subject in results) {
-                    SubjectResultCard(
-                        subject = subject,
-                        onClick = {
-                            onSubjectClick(subject.getId(), results.map { it.getId() })
-                        },
+            SearchBar(
+                query = query,
+                onQueryChange = { query = it },
+                onSearch = { submitted ->
+                    if (submitted.trim().length >= MIN_QUERY_LENGTH) {
+                        onSearchResults(submitted.trim(), 1, null)
+                    }
+                },
+                active = false,
+                onActiveChange = { },
+                placeholder = { Text("Search") },
+                leadingIcon = {
+                    MaterialSymbolIcon(
+                        icon = MaterialSymbolsIcons.Search,
+                        contentDescription = "Search",
                     )
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+            }
+
+            // Advanced filters, collapsed by default.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showAdvanced = !showAdvanced }
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                MaterialSymbolIcon(
+                    icon = if (showAdvanced) MaterialSymbolsIcons.KeyboardArrowUp else MaterialSymbolsIcons.KeyboardArrowDown,
+                    contentDescription = if (showAdvanced) "Collapse" else "Expand",
+                )
+                Text(
+                    text = "Advanced filters",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            }
+            if (showAdvanced) {
+                AdvancedSearchForm(state = formState)
+            }
+
+            // Debounce the query, then run the search off the main thread.
+            LaunchedEffect(query) {
+                val trimmed = query.trim()
+                errorMessage = null
+                if (trimmed.length < MIN_QUERY_LENGTH) {
+                    results = emptyList()
+                    searching = false
+                    return@LaunchedEffect
+                }
+                searching = true
+                delay(SEARCH_DEBOUNCE_MS)
+                if (query.trim() != trimmed) {
+                    return@LaunchedEffect
+                }
+                try {
+                    val found = withContext(Dispatchers.IO) {
+                        SearchUtil.searchSubjects(1, trimmed)
+                    }
+                    results = found
+                    errorMessage = null
+                }
+                catch (e: Exception) {
+                    Logger.get(SearchScreenLogMarker::class.java).error(e, "Search failed")
+                    errorMessage = "Something went wrong while searching. Please try again."
+                }
+                searching = false
+            }
+
+            when {
+                errorMessage != null -> StatusText(errorMessage!!)
+                !searching && query.trim().length >= MIN_QUERY_LENGTH && results.isEmpty() ->
+                    StatusText("No subjects found for \"${query.trim()}\".")
+                !searching && query.trim().length < MIN_QUERY_LENGTH && results.isEmpty() ->
+                    SearchEmptyState()
+                else -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // Rendered eagerly inside the screen's vertical scroll: a
+                    // LazyColumn here would be measured with infinite height and
+                    // crash. The result set is capped at MAX_SEARCH_HITS.
+                    for (subject in results) {
+                        SubjectResultCard(
+                            subject = subject,
+                            onClick = {
+                                onSubjectClick(subject.getId(), results.map { it.getId() })
+                            },
+                        )
+                    }
                 }
             }
-        }
 
-        if (searching) {
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator()
+            if (searching) {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
             }
         }
     }

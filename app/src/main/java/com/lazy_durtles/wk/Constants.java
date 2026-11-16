@@ -142,6 +142,12 @@ public final class Constants {
     public static final String FONTS_DIRECTORY_NAME = "fonts";
 
     /**
+     * Subdirectory name for locally stored WaniKani mnemonic background drawings
+     * (SVG files, copyright WaniKani / Tofugu).
+     */
+    public static final String MNEMONIC_IMAGES_DIRECTORY_NAME = "mnemonic-images";
+
+    /**
      * Document to show when the user has not yet provided an API key.
      */
     public static final String NO_API_KEY_HELP_DOCUMENT = "<h3>Welcome to " + Identification.APP_NAME+ " " + BuildConfig.VERSION_NAME + "!</h3><br/> "

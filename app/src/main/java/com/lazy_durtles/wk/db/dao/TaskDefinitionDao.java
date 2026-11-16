@@ -45,6 +45,12 @@ public abstract class TaskDefinitionDao {
     public abstract void deleteAudioDownloads();
 
     /**
+     * Room-generated method: delete all mnemonic image download tasks.
+     */
+    @Query("DELETE FROM task_definition WHERE taskClass = 'com.lazy_durtles.wk.tasks.DownloadMnemonicImagesTask'")
+    public abstract void deleteMnemonicImageDownloads();
+
+    /**
      * Room-generated method: get the total number of tasks.
      *
      * @return the number
@@ -58,7 +64,8 @@ public abstract class TaskDefinitionDao {
      * @return the number
      */
     @Query("SELECT COUNT(*) FROM task_definition WHERE taskClass!='com.lazy_durtles.wk.tasks.DownloadAudioTask' "
-            + "AND taskClass!='com.lazy_durtles.wk.tasks.DownloadPitchInfoTask'")
+            + "AND taskClass!='com.lazy_durtles.wk.tasks.DownloadPitchInfoTask' "
+            + "AND taskClass!='com.lazy_durtles.wk.tasks.DownloadMnemonicImagesTask'")
     public abstract int getApiCount();
 
     /**
@@ -68,7 +75,8 @@ public abstract class TaskDefinitionDao {
      */
     @Query("SELECT apiCount, audioCount, pitchInfoCount FROM "
             + "(SELECT COUNT(*) AS apiCount FROM task_definition "
-            + "WHERE taskClass!='com.lazy_durtles.wk.tasks.DownloadAudioTask' AND taskClass!='com.lazy_durtles.wk.tasks.DownloadPitchInfoTask'), "
+            + "WHERE taskClass!='com.lazy_durtles.wk.tasks.DownloadAudioTask' AND taskClass!='com.lazy_durtles.wk.tasks.DownloadPitchInfoTask' "
+            + "AND taskClass!='com.lazy_durtles.wk.tasks.DownloadMnemonicImagesTask'), "
             + "(SELECT count(*) AS audioCount FROM task_definition "
             + "WHERE taskClass='com.lazy_durtles.wk.tasks.DownloadAudioTask'), "
             + "(SELECT count(*) AS pitchInfoCount FROM task_definition "
@@ -91,6 +99,14 @@ public abstract class TaskDefinitionDao {
      */
     @Query("SELECT COUNT(*) FROM task_definition WHERE taskClass = :taskClass")
     public abstract int getCountByType(Class<? extends ApiTask> taskClass);
+
+    /**
+     * Room-generated method: get a LiveData count of queued mnemonic image download tasks.
+     *
+     * @return the LiveData instance
+     */
+    @Query("SELECT COUNT(*) FROM task_definition WHERE taskClass = 'com.lazy_durtles.wk.tasks.DownloadMnemonicImagesTask'")
+    public abstract LiveData<Integer> getLiveMnemonicImageDownloadCount();
 
     /**
      * Room-generated method: insert a new task.

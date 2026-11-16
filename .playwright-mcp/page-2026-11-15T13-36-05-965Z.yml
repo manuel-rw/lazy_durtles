@@ -1,0 +1,36 @@
+- generic [ref=f7e2]:
+  - generic [ref=f7e6]:
+    - group [ref=f7e7]:
+      - generic [aria-hidden] [ref=f7e8]:
+        - generic [ref=f7e9]: First name
+        - textbox [ref=f7e10]
+      - generic [ref=f7e11]:
+        - generic [ref=f7e12]: Email
+        - textbox "Email" [ref=f7e13]:
+          - /placeholder: crabigator@durtles.com
+      - generic [ref=f7e14]:
+        - generic [ref=f7e15]: Password
+        - textbox "Password" [ref=f7e16]:
+          - /placeholder: i love learning kanji
+      - generic [ref=f7e17]:
+        - checkbox "Keep me logged in" [ref=f7e18]
+        - generic [ref=f7e19]: Keep me logged in
+      - generic:
+        - generic "Cloudflare Turnstile"
+    - group [ref=f7e20]:
+      - generic [ref=f7e21]:
+        - button "Login" [disabled]
+  - contentinfo [ref=f7e22]:
+    - list [ref=f7e23]:
+      - listitem [ref=f7e24]:
+        - link "Sign up" [ref=f7e25] [cursor=pointer]:
+          - /url: /signup
+      - listitem [ref=f7e26]:
+        - link "Forgot your password?" [ref=f7e27] [cursor=pointer]:
+          - /url: /account/password/new
+      - listitem [ref=f7e28]:
+        - link "Return to landing page" [ref=f7e29] [cursor=pointer]:
+          - /url: /
+      - listitem [ref=f7e30]:
+        - link "Resend confirmation instructions" [ref=f7e31] [cursor=pointer]:
+          - /url: /account/confirmation/new

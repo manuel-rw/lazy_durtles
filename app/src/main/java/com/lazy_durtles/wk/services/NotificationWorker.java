@@ -147,7 +147,10 @@ public final class NotificationWorker {
             final AlertContext lastCtx = db.propertiesDao().getLastNotificationAlertContext();
             if (ctx.getNewestAvailableAt() > lastCtx.getNewestAvailableAt()) {
                 needsPost = true;
-                needsSound = true;
+                // Only alert audibly when there was a previous notification context; the very
+                // first notification after install (lastCtx still at its zero default) stays
+                // silent so the app does not chime the moment the dashboard first loads.
+                needsSound = lastCtx.getNewestAvailableAt() > 0;
             }
             if (ctx.getNumLessons() == 0 && ctx.getNumReviews() == 0 && (lastCtx.getNumLessons() != 0 || lastCtx.getNumReviews() != 0)) {
                 needsPost = true;

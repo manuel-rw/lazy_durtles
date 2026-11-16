@@ -23,7 +23,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -66,9 +66,10 @@ import com.lazy_durtles.wk.services.JobRunnerService
 import com.lazy_durtles.wk.ui.common.BulkOpDialog
 import com.lazy_durtles.wk.ui.common.BulkOpState
 import com.lazy_durtles.wk.ui.common.BulkOpType
+import com.lazy_durtles.wk.ui.common.MnemonicImageSection
 import com.lazy_durtles.wk.ui.common.runBulkOp
+import com.lazy_durtles.wk.ui.screens.settings.SettingsGroupCard
 import com.lazy_durtles.wk.util.AudioUtil
-import com.lazy_durtles.wk.util.ThemeUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -144,15 +145,21 @@ public fun SubjectInfoDumpContent(
             onReveal = { dumpStage = dumpStage.getNextStage() },
         )
 
-        // Kanji on'yomi, kun'yomi, nanori
-        if (showReadingAnswers && subject.hasOnYomi()) {
-            InfoText(subject.getOnYomiRichText().toString())
-        }
-        if (showReadingAnswers && subject.hasKunYomi()) {
-            InfoText(subject.getKunYomiRichText().toString())
-        }
-        if (showReadingAnswers && subject.hasNanori()) {
-            InfoText(subject.getNanoriRichText().toString())
+        // Kanji on'yomi, kun'yomi, nanori (the lines are self-labeled)
+        if (showReadingAnswers
+            && (subject.hasOnYomi() || subject.hasKunYomi() || subject.hasNanori())
+        ) {
+            InfoSection(header = null) {
+                if (showReadingAnswers && subject.hasOnYomi()) {
+                    InfoText(subject.getOnYomiRichText().toString())
+                }
+                if (showReadingAnswers && subject.hasKunYomi()) {
+                    InfoText(subject.getKunYomiRichText().toString())
+                }
+                if (showReadingAnswers && subject.hasNanori()) {
+                    InfoText(subject.getNanoriRichText().toString())
+                }
+            }
         }
 
         // Star rating
@@ -163,79 +170,84 @@ public fun SubjectInfoDumpContent(
         // Components table
         val hasComponents = showMeaningRelated && subject.hasComponents()
         if (hasComponents) {
-            SectionDivider()
-            SectionHeader(subject.getType().getComponentsHeaderText())
-            SubjectGrid(
-                subjects = subject.getComponentSubjectIds().mapNotNull { relatedById[it] },
-                onSubjectClick = onSubjectClick,
-                showMeaning = true,
-                showReading = showReadingRelated,
-            )
+            InfoSection(header = subject.getType().getComponentsHeaderText().removeSuffix(":")) {
+                SubjectGrid(
+                    subjects = subject.getComponentSubjectIds().mapNotNull { relatedById[it] },
+                    onSubjectClick = onSubjectClick,
+                    showMeaning = true,
+                    showReading = showReadingRelated,
+                )
+            }
         }
 
         // Meaning section
         val hasMeaningSection = subject.hasMeaningMnemonic() &&
                 (showMeaningRelated || showMeaningAnswers && subject.hasMeaningSynonyms())
         if (hasMeaningSection) {
-            SectionDivider()
-            if (showMeaningRelated && subject.hasMeaningMnemonic() && showMeaningMnemonic) {
-                InfoText(subject.getMeaningMnemonicRichText().toString())
-            }
-            if (showMeaningRelated && subject.hasMeaningHint() && showMeaningMnemonic) {
-                InfoText(subject.getMeaningHintRichText().toString())
-            }
-            if (showMeaningRelated && GlobalSettings.SubjectInfo.getShowLegacy() && subject.hasLegacy() && showMeaningMnemonic) {
-                InfoText(subject.getLegacyNameRichText().toString())
-                InfoText(subject.getLegacyMnemonicRichText().toString())
-            }
-            if (showMeaningRelated && subject.hasMeaningNote()) {
-                InfoText(subject.getMeaningNoteRichText().toString())
-            }
-            if (showMeaningAnswers) {
-                SynonymsRow(subject = subject)
+            InfoSection(header = "Meaning") {
+                if (showMeaningRelated && subject.hasMeaningMnemonic() && showMeaningMnemonic) {
+                    MnemonicImageSection(subject)
+                    InfoText(subject.getMeaningMnemonicRichText().toString())
+                }
+                if (showMeaningRelated && subject.hasMeaningHint() && showMeaningMnemonic) {
+                    InfoText(subject.getMeaningHintRichText().toString())
+                }
+                if (showMeaningRelated && GlobalSettings.SubjectInfo.getShowLegacy() && subject.hasLegacy() && showMeaningMnemonic) {
+                    InfoText(subject.getLegacyNameRichText().toString())
+                    InfoText(subject.getLegacyMnemonicRichText().toString())
+                }
+                if (showMeaningRelated && subject.hasMeaningNote()) {
+                    InfoText(subject.getMeaningNoteRichText().toString())
+                }
+                if (showMeaningAnswers) {
+                    SynonymsRow(subject = subject)
+                }
             }
         }
 
         // Reading section
         if (showReadingRelated && subject.hasReadingMnemonic()) {
-            SectionDivider()
-            if (showReadingMnemonic) {
-                InfoText(subject.getReadingMnemonicRichText().toString())
-            }
-            if (subject.hasReadingHint() && showReadingMnemonic) {
-                InfoText(subject.getReadingHintRichText().toString())
-            }
-            if (subject.hasReadingNote()) {
-                InfoText(subject.getReadingNoteRichText().toString())
+            InfoSection(header = "Reading") {
+                if (showReadingMnemonic) {
+                    InfoText(subject.getReadingMnemonicRichText().toString())
+                }
+                if (subject.hasReadingHint() && showReadingMnemonic) {
+                    InfoText(subject.getReadingHintRichText().toString())
+                }
+                if (subject.hasReadingNote()) {
+                    InfoText(subject.getReadingNoteRichText().toString())
+                }
             }
         }
 
         // Parts of speech
         if (showMeaningRelated && subject.hasPartsOfSpeech()) {
-            SectionDivider()
-            InfoText(subject.getPartsOfSpeechRichText().toString())
+            InfoSection(header = "Parts of speech") {
+                InfoText(subject.getPartsOfSpeechRichText().toString())
+            }
         }
 
         // Stroke order diagram
         val showStrokeOrder = showMeaningRelated && GlobalSettings.SubjectInfo.getShowStrokeOrder() && subject.hasStrokeData()
         if (showStrokeOrder) {
-            SectionDivider()
-            StrokeOrderDiagram(
-                strokeData = subject.getParsedStrokeData(),
-                initialAnimated = GlobalSettings.SubjectInfo.getStrokeOrderAnimated(),
-                sizeDp = GlobalSettings.SubjectInfo.getStrokeOrderSize(),
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
+            InfoSection(header = "Stroke order") {
+                StrokeOrderDiagram(
+                    strokeData = subject.getParsedStrokeData(),
+                    initialAnimated = GlobalSettings.SubjectInfo.getStrokeOrderAnimated(),
+                    sizeDp = GlobalSettings.SubjectInfo.getStrokeOrderSize(),
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                )
+            }
         }
 
         // Context sentences
         val hasContextSentences = showMeaningRelated && subject.hasContextSentences()
         if (hasContextSentences) {
-            SectionDivider()
-            SectionHeader("Context sentences:")
-            for (sentence in subject.getContextSentences()) {
-                InfoText(sentence.japanese.orEmpty())
-                BlurRevealSentenceText(text = "- " + sentence.english.orEmpty() + " ")
+            InfoSection(header = "Context sentences") {
+                for (sentence in subject.getContextSentences()) {
+                    InfoText(sentence.japanese.orEmpty())
+                    BlurRevealSentenceText(text = "- " + sentence.english.orEmpty() + " ")
+                }
             }
         }
 
@@ -246,26 +258,26 @@ public fun SubjectInfoDumpContent(
         val hasAmalgamations = showMeaningRelated && amalgamationIds.isNotEmpty()
         val visuallySimilarSection: @Composable () -> Unit = {
             if (hasVisuallySimilars) {
-                SectionDivider()
-                SectionHeader("Visually similar:")
-                SubjectGrid(
-                    subjects = visuallySimilarIds.mapNotNull { relatedById[it] },
-                    onSubjectClick = onSubjectClick,
-                    showMeaning = true,
-                    showReading = showReadingRelated,
-                )
+                InfoSection(header = "Visually similar") {
+                    SubjectGrid(
+                        subjects = visuallySimilarIds.mapNotNull { relatedById[it] },
+                        onSubjectClick = onSubjectClick,
+                        showMeaning = true,
+                        showReading = showReadingRelated,
+                    )
+                }
             }
         }
         val amalgamationsSection: @Composable () -> Unit = {
             if (hasAmalgamations) {
-                SectionDivider()
-                SectionHeader("Used in:")
-                SubjectGrid(
-                    subjects = amalgamationIds.mapNotNull { relatedById[it] },
-                    onSubjectClick = onSubjectClick,
-                    showMeaning = true,
-                    showReading = showReadingRelated,
-                )
+                InfoSection(header = "Used in") {
+                    SubjectGrid(
+                        subjects = amalgamationIds.mapNotNull { relatedById[it] },
+                        onSubjectClick = onSubjectClick,
+                        showMeaning = true,
+                        showReading = showReadingRelated,
+                    )
+                }
             }
         }
         if (GlobalSettings.SubjectInfo.getSwapSimilarAndAmalgamations()) {
@@ -279,8 +291,9 @@ public fun SubjectInfoDumpContent(
 
         // Details table
         if (showMeaningAnswers || showReadingAnswers) {
-            SectionDivider()
-            DetailsTable(subject = subject)
+            InfoSection(header = "Details") {
+                DetailsTable(subject = subject)
+            }
         }
 
         // Resurrect / burn buttons
@@ -400,12 +413,13 @@ private fun SubjectInfoHeadline(
 
 @Composable
 private fun AudioButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Button(onClick = onClick, modifier = modifier) {
+    // The label is not rendered; it only distinguishes readings in the
+    // content description when a subject has several audio buttons.
+    FilledIconButton(onClick = onClick, modifier = modifier) {
         Icon(
             painter = painterResource(R.drawable.ic_baseline_volume_up_24px),
-            contentDescription = "Play audio",
+            contentDescription = if (label.isBlank()) "Play audio" else "Play audio ($label)",
         )
-        Text(text = label)
     }
 }
 
@@ -453,11 +467,21 @@ private fun SubjectTitleButton(subject: Subject, modifier: Modifier = Modifier) 
                 )
             }
             else {
+                // Long character strings (e.g. kana vocabulary like 召し上がる)
+                // must shrink to stay inside the fixed tile.
+                val characters = subject.getCharacters() ?: subject.getSlug() ?: ""
+                val titleFontSize = when {
+                    characters.length <= 2 -> 48
+                    characters.length == 3 -> 36
+                    characters.length == 4 -> 28
+                    else -> 22
+                }
                 Text(
-                    text = subject.getCharacters() ?: subject.getSlug() ?: "",
+                    text = characters,
                     color = Color(subject.getTextColor()),
-                    fontSize = 48.sp,
+                    fontSize = titleFontSize.sp,
                     textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 4.dp),
                 )
             }
         }
@@ -693,19 +717,61 @@ private fun DetailsTable(subject: Subject, modifier: Modifier = Modifier) {
 
 @Composable
 private fun DetailRow(label: String, value: String, modifier: Modifier = Modifier) {
-    Row(modifier = modifier.fillMaxWidth()) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Text(
             text = label,
             fontWeight = FontWeight.Bold,
             fontSize = GlobalSettings.Font.getFontSizeSubjectInfo().sp,
-            textAlign = TextAlign.End,
-            modifier = Modifier.padding(end = 8.dp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
         )
         Text(
             text = value,
             fontSize = GlobalSettings.Font.getFontSizeSubjectInfo().sp,
+            textAlign = TextAlign.End,
         )
     }
+}
+
+/**
+ * One info section: an optional primary-colored header above a rounded
+ * Material Expressive card, replacing the flat divider-separated sections.
+ * Shared with the study materials editor.
+ */
+@Composable
+internal fun InfoSection(
+    header: String?,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        if (header != null) {
+            InfoSectionHeader(header)
+        }
+        SettingsGroupCard {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                content()
+            }
+        }
+    }
+}
+
+@Composable
+private fun InfoSectionHeader(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = modifier.padding(start = 12.dp, top = 8.dp, bottom = 4.dp),
+    )
 }
 
 @Composable
@@ -714,24 +780,5 @@ private fun InfoText(text: String, modifier: Modifier = Modifier) {
         text = text,
         modifier = modifier,
         fontSize = GlobalSettings.Font.getFontSizeSubjectInfo().sp,
-    )
-}
-
-@Composable
-private fun SectionHeader(text: String, modifier: Modifier = Modifier) {
-    Text(
-        text = text,
-        modifier = modifier,
-        fontWeight = FontWeight.Bold,
-        fontSize = GlobalSettings.Font.getFontSizeSubjectInfo().sp,
-    )
-}
-
-@Composable
-private fun SectionDivider(modifier: Modifier = Modifier) {
-    HorizontalDivider(
-        modifier = modifier.padding(top = 4.dp),
-        thickness = 1.dp,
-        color = Color(ThemeUtil.getColor(R.attr.colorDivider)),
     )
 }
