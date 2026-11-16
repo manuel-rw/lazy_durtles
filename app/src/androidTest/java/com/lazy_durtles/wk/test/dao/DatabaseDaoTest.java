@@ -214,7 +214,7 @@ public class DatabaseDaoTest {
 
     @Test
     public void appDatabase_hasExpectedVersion() {
-        // The database version should be 68 (matching LATEST_VERSION in DatabaseMigrationTest)
-        assertEquals(68, db.getOpenHelper().getReadableDatabase().getVersion());
+        // The database version should be 69 (matching LATEST_VERSION in DatabaseMigrationTest)
+        assertEquals(69, db.getOpenHelper().getReadableDatabase().getVersion());
     }
 }
