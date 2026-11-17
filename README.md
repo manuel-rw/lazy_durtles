@@ -14,6 +14,8 @@ Download the latest APK from the [Releases Section](https://github.com/manuel-rw
 - Elegant onboarding
 - Modern design with Material Expressive 3
 - Background sync of lessons and reviews
+- Mnemonics support
+- Improved search
 
 ## Showcase
 
