@@ -10,6 +10,8 @@ This fork extends some features and uses a more modern Jetpack based approach an
 
 Download the latest APK from the [Releases Section](https://github.com/manuel-rw/smouldering_durtles/releases/latest).
 
+Install via Obtainium: [Download](obtainium://add?url=https://github.com/manuel-rw/lazy_durtles)
+
 ## Features
 - Elegant onboarding
 - Modern design with Material Expressive 3
