@@ -11,7 +11,7 @@ This fork extends some features and uses a more modern Jetpack based approach an
 Download the latest APK from the [Releases Section](https://github.com/manuel-rw/smouldering_durtles/releases/latest).
 
 
-[<img src="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add?url=https://github.com/manuel-rw/lazy_durtles" />](https://raw.githubusercontent.com/ImranR98/Obtainium/refs/heads/main/assets/graphics/badge_obtainium.png)
+[<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/refs/heads/main/assets/graphics/badge_obtainium.png" />](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add?url=https://github.com/manuel-rw/lazy_durtles)
 
 ## Features
 - Elegant onboarding
